@@ -7323,6 +7323,17 @@ button:active {
   transform: scale(0.98);
 }
 
+button:focus-visible, 
+a:focus-visible, 
+input:focus-visible {
+  outline: 3px solid #000;
+  outline-offset: 2px;
+}
+
+.pixel-border:focus-within {
+  outline: 2px solid rgba(0,0,0,0.1);
+}
+
 /* Scrollbar styling */
 ::-webkit-scrollbar {
   width: 12px;
@@ -7474,17 +7485,13 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Adnan Rafi | Full Stack Developer",
-  description: "Portfolio of Adnan Rafi - Full Stack Developer specializing in Next.js, AI/ML, and scalable web applications.",
-  keywords: ["portfolio", "developer", "next.js", "full-stack", "ai", "ml"],
-  authors: [{ name: "Adnan Rafi" }],
+  title: "Adnan Rafi — Full Stack Developer",
+  description:
+    "Full-stack developer building AI-powered systems, interactive products, and scalable backend architectures.",
   openGraph: {
-    title: "Adnan Rafi | Full Stack Developer",
-    description: "Portfolio of Adnan Rafi - Full Stack Developer",
+    title: "Adnan Rafi Portfolio",
+    description: "AI-powered systems, full-stack engineering, real-world products.",
     type: "website",
-  },
-  twitter: {
-    card: "summary_large_image",
   },
 };
 
@@ -7509,52 +7516,1135 @@ export default function RootLayout({
 ```tsx
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import Topbar from '@/components/Topbar';
 import Sidebar from '@/components/Sidebar';
 import Window from '@/components/Window';
 import ProjectView from '@/components/ProjectView';
 import AboutMe from '@/components/AboutMe';
 import Links from '@/components/Links';
+import BootSequence from '@/components/BootSequence';
+import CommandPalette from '@/components/CommandPalette';
+import SystemOverlay, { LogEntry } from '@/components/SystemOverlay';
 
-interface Project {
-  id: string;
-  name: string;
-  title: string;
-  subtitle: string;
-  description: string;
-  features: string[];
-  tech: string[];
-  image?: string;
-  links?: {
-    live?: string;
-    github?: string;
+import { PROJECTS } from '@/data/projects';
+import { DESKTOP_ICONS } from '@/data/icons';
+import { PROFILE } from '@/data/profile';
+import { LINKS } from '@/data/links';
+import { useWindowManager } from '@/hooks/useWindowManager';
+import { motion, AnimatePresence } from 'framer-motion';
+
+export default function Home() {
+  const [isBooting, setIsBooting] = useState(true);
+  const [logs, setLogs] = useState<LogEntry[]>([]);
+  const { windows, openWindow, closeWindow, focusWindow, activeWindow } = useWindowManager(
+    DESKTOP_ICONS.map((i) => i.id)
+  );
+
+  const logIdRef = useRef(0);
+  const addLog = useCallback((message: string) => {
+    const timestamp = new Date().toLocaleTimeString([], { hour12: false });
+    setLogs((prev) => [...prev, { id: `${Date.now()}-${logIdRef.current++}`, timestamp, message }]);
+  }, []);
+
+  useEffect(() => {
+    if (!isBooting) {
+      addLog('System initialized');
+      addLog('Kernel loaded successfully');
+    }
+  }, [isBooting, addLog]);
+
+  const handleOpenWindow = (id: string) => {
+    const icon = DESKTOP_ICONS.find(i => i.id === id);
+    addLog(`Opening ${icon?.label || id}...`);
+    openWindow(id);
   };
+
+  const handleCloseWindow = (id: string) => {
+    addLog(`Closing ${id}...`);
+    closeWindow(id);
+  };
+
+  const commands = [
+    { id: 'open-projects', label: 'open projects', action: () => handleOpenWindow('projects') },
+    { id: 'open-about', label: 'open about', action: () => handleOpenWindow('about') },
+    { id: 'open-links', label: 'open links', action: () => handleOpenWindow('links') },
+    { id: 'clear-logs', label: 'clear logs', action: () => setLogs([]) },
+  ];
+
+  if (isBooting) {
+    return <BootSequence onComplete={() => setIsBooting(false)} />;
+  }
+
+  return (
+    <main className="min-h-screen bg-gray-100 overflow-x-hidden">
+      {/* Topbar */}
+      <Topbar onEmailClick={() => {
+        addLog('Initiating mail client...');
+        window.location.href = 'mailto:adnanrahmanrafi515@gmail.com';
+      }} />
+
+      {/* Main Content Area */}
+      <div className="pt-20 pb-12">
+        {/* Desktop Sidebar (Right side as updated) */}
+        <Sidebar icons={DESKTOP_ICONS} onIconClick={handleOpenWindow} />
+
+        {/* Mobile Section-Based Layout */}
+        <div className="lg:hidden flex flex-col gap-12 px-6 py-8">
+          <section id="mobile-hero" className="py-12 border-b-2 border-black/5">
+             <motion.div
+               initial={{ opacity: 0, y: 20 }}
+               animate={{ opacity: 1, y: 0 }}
+             >
+                <h1 className="text-5xl font-display font-bold mb-4 leading-tight tracking-tighter">
+                   Adnan Rafi
+                </h1>
+                <p className="text-lg font-mono text-gray-500 uppercase tracking-widest mb-6">
+                   Full Stack Developer
+                </p>
+                <div className="flex gap-2">
+                   <button 
+                     onClick={() => handleOpenWindow('projects')}
+                     className="bg-black text-white px-6 py-3 font-mono font-bold text-xs rounded-sm shadow-[4px_4px_0px_0px_rgba(0,0,0,0.2)]"
+                   >
+                     VIEW_PROJECTS()
+                   </button>
+                </div>
+             </motion.div>
+          </section>
+
+          {/* Mobile Grid Navigation */}
+          <div className="grid grid-cols-1 gap-4">
+             <p className="text-[10px] font-mono font-bold text-gray-400 uppercase tracking-[0.3em] mb-2">Navigation_Nodes</p>
+            {DESKTOP_ICONS.map((icon) => (
+              <button
+                key={icon.id}
+                onClick={() => handleOpenWindow(icon.id)}
+                className="flex items-center gap-4 p-5 bg-white border-2 border-black rounded-sm shadow-[6px_6px_0px_0px_rgba(0,0,0,0.1)] active:translate-x-1 active:translate-y-1 active:shadow-none transition-all"
+                aria-label={`Open ${icon.label}`}
+              >
+                <span className="text-3xl">{icon.icon}</span>
+                <div className="text-left">
+                   <span className="block text-sm font-mono font-bold uppercase tracking-tighter">{icon.label}</span>
+                   <span className="block text-[10px] text-gray-500">{icon.description}</span>
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Desktop Welcome State */}
+        <AnimatePresence>
+          {!activeWindow && (
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="hidden lg:flex fixed inset-0 items-center justify-center -z-10"
+            >
+              <div className="text-center">
+                <motion.div
+                  initial={{ scale: 0.9 }}
+                  animate={{ scale: 1 }}
+                  transition={{ repeat: Infinity, repeatType: 'reverse', duration: 4 }}
+                  className="relative"
+                >
+                   <div className="absolute -inset-10 bg-black/5 blur-3xl rounded-full" />
+                   <h1 className="text-[12rem] font-display font-bold opacity-[0.03] select-none tracking-tighter">
+                      RAFI
+                   </h1>
+                </motion.div>
+                <div className="mt-[-4rem]">
+                  <h2 className="text-6xl font-display font-bold mb-4 tracking-tighter">Welcome</h2>
+                  <p className="text-lg text-gray-500 font-mono tracking-widest uppercase">Kernel Version 2.0.4-PROD</p>
+                  <div className="mt-8 flex items-center justify-center gap-4 text-xs font-mono text-gray-400">
+                     <span>PRESS <kbd className="bg-gray-200 px-2 py-1 border border-black/10 rounded font-bold text-black">/</kbd> FOR COMMANDS</span>
+                     <span className="w-1 h-1 bg-gray-300 rounded-full" />
+                     <span>CLICK ICONS TO INTERACT</span>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+
+      {/* Windows Layer */}
+      {windows.map((win) => (
+        <Window
+          key={win.id}
+          isOpen={win.isOpen}
+          onClose={() => handleCloseWindow(win.id)}
+          title={DESKTOP_ICONS.find(i => i.id === win.id)?.label || win.id}
+          zIndex={win.zIndex}
+          onFocus={() => focusWindow(win.id)}
+          maxWidth={win.id === 'projects' ? 'max-w-6xl' : win.id === 'about' ? 'max-w-4xl' : 'max-w-2xl'}
+        >
+          {win.id === 'projects' && <ProjectView projects={PROJECTS} />}
+          {win.id === 'about' && <AboutMe profile={PROFILE} />}
+          {win.id === 'links' && <Links links={LINKS} />}
+        </Window>
+      ))}
+
+      {/* Overlays */}
+      <CommandPalette commands={commands} />
+      <SystemOverlay logs={logs} />
+    </main>
+  );
 }
 
-const PROJECTS: Project[] = [
+```
+
+
+---
+## FILE: src/components/AboutMe.tsx
+
+```tsx
+'use client';
+
+import { motion } from 'framer-motion';
+import { Profile } from '@/types';
+
+interface AboutMeProps {
+  profile: Profile;
+}
+
+export default function AboutMe({ profile }: AboutMeProps) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+      className="space-y-8 max-w-3xl"
+    >
+      {/* Header */}
+      <div className="border-b-2 border-black/10 pb-6">
+        <h2 className="text-4xl font-display font-bold mb-2 tracking-tight">{profile.name}</h2>
+        <p className="text-base font-mono text-gray-500 mb-4 italic uppercase tracking-wider">{profile.role}</p>
+        <div className="bg-black text-white p-4 rounded-sm shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)]">
+           <p className="text-base leading-relaxed font-mono opacity-90">{profile.summary}</p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        {/* Skills */}
+        {profile.skills.length > 0 && (
+          <div className="space-y-4">
+            <h3 className="text-xl font-bold font-display flex items-center gap-2">
+              <span className="w-2 h-2 bg-black rounded-full"></span>
+              Core Competencies
+            </h3>
+            <div className="space-y-4">
+              {profile.skills.map((skill, idx) => (
+                <div key={idx} className="group">
+                  <p className="text-[10px] font-mono font-bold text-gray-400 mb-2 uppercase tracking-widest group-hover:text-black transition-colors">
+                    {skill.category}
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {skill.items.map((item) => (
+                      <span
+                        key={item}
+                        className="px-2 py-1 border-2 border-black rounded text-[10px] font-mono font-bold bg-white hover:bg-black hover:text-white transition-all cursor-default"
+                      >
+                        {item}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Education */}
+        {profile.education.length > 0 && (
+          <div className="space-y-4">
+            <h3 className="text-xl font-bold font-display flex items-center gap-2">
+               <span className="w-2 h-2 bg-black rounded-full"></span>
+               Academic Background
+            </h3>
+            <div className="space-y-4">
+              {profile.education.map((edu, idx) => (
+                <div
+                  key={idx}
+                  className="border-l-4 border-black pl-4 py-2 bg-gray-50 rounded-r-sm hover:bg-gray-100 transition-colors"
+                >
+                  <p className="font-mono font-bold text-sm text-black">{edu.degree}</p>
+                  <p className="text-xs text-gray-600 font-medium">{edu.school}</p>
+                  {edu.year && (
+                    <div className="mt-2 inline-block px-2 py-0.5 bg-black text-white text-[10px] font-mono rounded">
+                      {edu.year}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </motion.div>
+  );
+}
+
+```
+
+
+---
+## FILE: src/components/BootSequence.tsx
+
+```tsx
+'use client';
+
+import { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+
+export default function BootSequence({ onComplete }: { onComplete: () => void }) {
+  const [lines, setLines] = useState<string[]>([]);
+  const bootMessages = [
+    'INITIALIZING SYSTEM...',
+    'LOADING CORE MODULES...',
+    'ESTABLISHING SECURE CONNECTION...',
+    'MOUNTING FILESYSTEM...',
+    'STARTING INTERFACE...',
+    'READY.'
+  ];
+
+  useEffect(() => {
+    let currentLine = 0;
+    const interval = setInterval(() => {
+      if (currentLine < bootMessages.length) {
+        setLines((prev) => [...prev, bootMessages[currentLine]]);
+        currentLine++;
+      } else {
+        clearInterval(interval);
+        setTimeout(onComplete, 500);
+      }
+    }, 200);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <div className="fixed inset-0 bg-black z-[100] flex flex-col items-center justify-center font-mono p-4">
+      <div className="w-full max-w-md space-y-1">
+        {lines.map((line, i) => (
+          <motion.p
+            key={i}
+            initial={{ opacity: 0, x: -5 }}
+            animate={{ opacity: 1, x: 0 }}
+            className={`text-sm ${i === bootMessages.length - 1 ? 'text-green-500 font-bold' : 'text-gray-400'}`}
+          >
+            <span className="mr-2 text-gray-600">[{new Date().toLocaleTimeString([], { hour12: false })}]</span>
+            {line}
+          </motion.p>
+        ))}
+        <motion.div
+          animate={{ opacity: [0, 1] }}
+          transition={{ repeat: Infinity, duration: 0.8 }}
+          className="inline-block w-2 h-4 bg-green-500 ml-1"
+        />
+      </div>
+      
+      {/* Retro CRT Scanlines Effect (duplicated from globals but stronger here) */}
+      <div className="absolute inset-0 pointer-events-none opacity-20 bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] bg-[length:100%_4px,3px_100%]" />
+    </div>
+  );
+}
+
+```
+
+
+---
+## FILE: src/components/Clock.tsx
+
+```tsx
+'use client';
+
+import { useEffect, useState } from 'react';
+
+export default function Clock() {
+  const [time, setTime] = useState<string>('');
+
+  useEffect(() => {
+    setTime(new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
+    
+    const interval = setInterval(() => {
+      setTime(new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  return <span className="font-mono text-sm">{time || '--:--:--'}</span>;
+}
+
+```
+
+
+---
+## FILE: src/components/CommandPalette.tsx
+
+```tsx
+'use client';
+
+import { useState, useEffect, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+
+interface Command {
+  id: string;
+  label: string;
+  action: () => void;
+}
+
+export default function CommandPalette({ commands }: { commands: Command[] }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [query, setQuery] = useState('');
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === '/' && !isOpen) {
+        e.preventDefault();
+        setIsOpen(true);
+      } else if (e.key === 'Escape' && isOpen) {
+        setIsOpen(false);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (isOpen && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [isOpen]);
+
+  const filteredCommands = commands.filter((cmd) =>
+    cmd.label.toLowerCase().includes(query.toLowerCase())
+  );
+
+  const handleExecute = (cmd: Command) => {
+    cmd.action();
+    setIsOpen(false);
+    setQuery('');
+  };
+
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <div className="fixed inset-0 z-[100] flex items-start justify-center pt-[15vh] px-4">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setIsOpen(false)}
+            className="fixed inset-0 bg-black/40 backdrop-blur-sm"
+          />
+          
+          <motion.div
+            initial={{ scale: 0.95, opacity: 0, y: -20 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            exit={{ scale: 0.95, opacity: 0, y: -20 }}
+            className="w-full max-w-xl bg-white border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] z-10 overflow-hidden"
+          >
+            <div className="p-4 border-b-4 border-black flex items-center gap-3">
+              <span className="text-xl font-mono font-bold text-gray-400">/</span>
+              <input
+                ref={inputRef}
+                type="text"
+                placeholder="Enter command (e.g. open projects)..."
+                className="flex-1 bg-transparent border-none outline-none font-mono text-lg focus:ring-0 p-0"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && filteredCommands.length > 0) {
+                    handleExecute(filteredCommands[0]);
+                  }
+                }}
+              />
+              <div className="text-[10px] font-mono bg-gray-100 px-2 py-1 border-2 border-black rounded uppercase font-bold text-gray-400">
+                ESC to Exit
+              </div>
+            </div>
+            
+            <div className="max-h-[300px] overflow-y-auto">
+              {filteredCommands.length > 0 ? (
+                filteredCommands.map((cmd, idx) => (
+                  <button
+                    key={cmd.id}
+                    onClick={() => handleExecute(cmd)}
+                    className="w-full text-left p-4 hover:bg-black hover:text-white flex items-center justify-between group transition-colors"
+                  >
+                    <span className="font-mono font-bold uppercase tracking-tighter">{cmd.label}</span>
+                    <span className="text-[10px] opacity-0 group-hover:opacity-100 font-mono">↵ EXECUTE</span>
+                  </button>
+                ))
+              ) : (
+                <div className="p-8 text-center text-gray-400 font-mono text-sm">
+                  NO_COMMANDS_FOUND_MATCHING: "{query}"
+                </div>
+              )}
+            </div>
+          </motion.div>
+        </div>
+      )}
+    </AnimatePresence>
+  );
+}
+
+```
+
+
+---
+## FILE: src/components/Links.tsx
+
+```tsx
+'use client';
+
+import { motion } from 'framer-motion';
+import { Link } from '@/types';
+
+interface LinksProps {
+  links: Link[];
+}
+
+export default function Links({ links }: LinksProps) {
+  // Gracefully hide missing links
+  const activeLinks = links.filter(link => link.url && link.url !== '#' && link.url !== 'mailto:');
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+      className="space-y-6 max-w-lg"
+    >
+      <div className="border-b-2 border-black/10 pb-4">
+        <h2 className="text-2xl font-display font-bold tracking-tight">COMMUNICATION_CHANNELS</h2>
+        <p className="text-sm text-gray-500 font-mono mt-1 italic">Establish a connection for collaboration</p>
+      </div>
+
+      <div className="grid grid-cols-1 gap-3">
+        {activeLinks.map((link, idx) => (
+          <motion.a
+            key={link.title}
+            href={link.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: idx * 0.1, duration: 0.3 }}
+            aria-label={`Visit my ${link.title}`}
+            className="flex items-center gap-4 p-4 border-2 border-black rounded-sm bg-white hover:bg-black hover:text-white transition-all group shadow-[4px_4px_0px_0px_rgba(0,0,0,0.05)] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px]"
+          >
+            <span className="text-3xl grayscale group-hover:grayscale-0 transition-all">{link.icon}</span>
+            <div className="flex-1">
+              <p className="font-mono font-bold text-sm tracking-tighter uppercase">{link.title}</p>
+              <p className="text-[10px] font-mono opacity-50 truncate group-hover:opacity-100">{link.url.replace('mailto:', '')}</p>
+            </div>
+            <div className="w-8 h-8 flex items-center justify-center border-2 border-current rounded-full group-hover:rotate-45 transition-transform">
+               <span className="text-sm">↗</span>
+            </div>
+          </motion.a>
+        ))}
+      </div>
+
+      <div className="pt-6 border-t-2 border-black/5 flex flex-col gap-2">
+        <div className="flex items-center gap-2">
+           <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+           <p className="text-[10px] font-mono font-bold text-gray-400 uppercase tracking-widest">System Status: Active</p>
+        </div>
+        <p className="text-[10px] font-mono text-gray-400">© {new Date().getFullYear()} ADNAN_RAFI. ALL_RIGHTS_RESERVED.</p>
+      </div>
+    </motion.div>
+  );
+}
+
+```
+
+
+---
+## FILE: src/components/ProjectView.tsx
+
+```tsx
+'use client';
+
+import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import Image from 'next/image';
+import { Project } from '@/types';
+
+interface ProjectViewProps {
+  projects: Project[];
+}
+
+export default function ProjectView({ projects }: ProjectViewProps) {
+  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(projects[0]?.id || null);
+  const [imgLoading, setImgLoading] = useState(true);
+
+  const selectedProject = projects.find(p => p.id === selectedProjectId);
+
+  return (
+    <div className="flex flex-col lg:flex-row gap-6 h-full">
+      {/* Folder Sidebar */}
+      <div className="w-full lg:w-48 border-r-0 lg:border-r-2 border-black/10 lg:pr-4">
+        <div className="mb-4">
+          <p className="text-[10px] font-mono font-bold mb-3 text-gray-400 uppercase tracking-widest">Available Modules</p>
+          <div className="flex lg:flex-col gap-2 overflow-x-auto pb-2 lg:pb-0 scrollbar-hide">
+            {projects.map((project) => (
+              <motion.button
+                key={project.id}
+                onClick={() => {
+                  setSelectedProjectId(project.id);
+                  setImgLoading(true);
+                }}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                aria-label={`View ${project.name} project`}
+                className={`flex-shrink-0 lg:w-full text-left px-3 py-2 border-2 border-black rounded text-xs font-mono transition-all flex items-center gap-2 ${
+                  selectedProjectId === project.id
+                    ? 'bg-black text-white font-bold shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)]'
+                    : 'bg-white text-black hover:bg-gray-100'
+                }`}
+              >
+                <span className="text-base">{selectedProjectId === project.id ? '📂' : '📁'}</span>
+                <span className="truncate">{project.name}</span>
+              </motion.button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Project Content */}
+      <div className="flex-1 min-h-[400px] relative">
+        <AnimatePresence mode="wait">
+          {selectedProject ? (
+            <motion.div
+              key={selectedProject.id}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2 }}
+              className="flex flex-col gap-6"
+            >
+              {/* Header */}
+              <div>
+                <h2 className="text-2xl lg:text-4xl font-display font-bold mb-1 tracking-tight text-black">
+                  {selectedProject.title}
+                </h2>
+                <p className="text-sm text-gray-500 font-mono italic">{selectedProject.subtitle}</p>
+              </div>
+
+              {/* Description & Features */}
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+                <div className="space-y-6">
+                  <p className="text-base leading-relaxed text-gray-800 font-medium">
+                    {selectedProject.description}
+                  </p>
+                  
+                  {selectedProject.features.length > 0 && (
+                    <div className="bg-gray-50 p-4 border-l-4 border-black rounded">
+                      <h3 className="font-bold text-sm mb-3 uppercase tracking-tighter">Key Capabilities:</h3>
+                      <ul className="text-xs space-y-2 ml-1">
+                        {selectedProject.features.map((feature, idx) => (
+                          <li key={idx} className="flex gap-2 items-start">
+                            <span className="text-black/30 mt-0.5">↳</span>
+                            <span className="text-gray-700">{feature}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+
+                {/* Image Section */}
+                <div className="space-y-4">
+                  {selectedProject.image && (
+                    <div className="border-3 border-black rounded overflow-hidden bg-gray-100 shadow-[8px_8px_0px_0px_rgba(0,0,0,0.05)] relative group">
+                      {/* Skeleton Loader */}
+                      {imgLoading && (
+                        <div className="absolute inset-0 bg-gray-200 animate-pulse flex items-center justify-center">
+                          <div className="w-12 h-12 border-4 border-black/10 border-t-black rounded-full animate-spin"></div>
+                        </div>
+                      )}
+                      
+                      <div className="relative w-full h-56 lg:h-72">
+                        <Image
+                          src={selectedProject.image}
+                          alt={selectedProject.title}
+                          fill
+                          className={`object-cover transition-opacity duration-300 ${imgLoading ? 'opacity-0' : 'opacity-100'}`}
+                          onLoad={() => setImgLoading(false)}
+                          onError={(e) => {
+                            e.currentTarget.src = "/fallback.png";
+                            setImgLoading(false);
+                          }}
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Links */}
+                  <div className="flex gap-3 flex-wrap">
+                    {selectedProject.links?.live && (
+                      <a
+                        href={selectedProject.links.live}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex-1 text-center px-4 py-3 bg-black text-white rounded font-mono text-xs font-bold hover:bg-gray-800 transition-all shadow-[4px_4px_0px_0px_rgba(0,0,0,0.2)]"
+                        aria-label="Visit live project"
+                      >
+                        RUN_APPLICATION()
+                      </a>
+                    )}
+                    {selectedProject.links?.github && (
+                      <a
+                        href={selectedProject.links.github}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex-1 text-center px-4 py-3 border-2 border-black rounded font-mono text-xs font-bold hover:bg-gray-100 transition-all"
+                        aria-label="View source code on GitHub"
+                      >
+                        VIEW_SOURCE.sh
+                      </a>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Tech Stack */}
+              <div className="pt-4 border-t-2 border-black/5">
+                <p className="text-[10px] font-mono font-bold mb-3 text-gray-400 uppercase tracking-widest">Environment / Stack</p>
+                <div className="flex flex-wrap gap-2">
+                  {selectedProject.tech.map((tech) => (
+                    <span
+                      key={tech}
+                      className="px-2 py-1 border-2 border-black/10 rounded text-[10px] font-mono font-bold bg-white hover:border-black transition-colors"
+                    >
+                      {tech}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </motion.div>
+          ) : (
+            <div className="flex flex-col items-center justify-center h-full py-20 text-gray-400 font-mono">
+              <span className="text-4xl mb-4">🔍</span>
+              <p>Select a project from the sidebar to begin.</p>
+            </div>
+          )}
+        </AnimatePresence>
+      </div>
+    </div>
+  );
+}
+
+```
+
+
+---
+## FILE: src/components/Sidebar.tsx
+
+```tsx
+'use client';
+
+import { motion } from 'framer-motion';
+import { Icon } from '@/types';
+
+interface SidebarProps {
+  icons: Icon[];
+  onIconClick: (id: string) => void;
+}
+
+export default function Sidebar({ icons, onIconClick }: SidebarProps) {
+  return (
+    <div className="hidden lg:fixed right-8 top-1/2 -translate-y-1/2 flex flex-col gap-6 p-4 w-32 z-20">
+      {icons.map((icon, index) => (
+        <motion.button
+          key={icon.id}
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.5 + index * 0.1 }}
+          onClick={() => onIconClick(icon.id)}
+          whileHover={{ x: -5 }}
+          whileTap={{ scale: 0.95 }}
+          aria-label={`Open ${icon.label} window`}
+          className="flex flex-col items-center gap-2 cursor-pointer group"
+        >
+          <div className="w-16 h-16 border-3 border-black rounded-lg flex items-center justify-center bg-white text-3xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] group-hover:bg-black group-hover:text-white transition-all group-hover:shadow-none">
+            {icon.icon}
+          </div>
+          <div className="flex flex-col items-center">
+            <span className="text-[10px] font-mono font-bold uppercase tracking-tighter text-black bg-white px-1 border border-black">
+              {icon.label}
+            </span>
+          </div>
+        </motion.button>
+      ))}
+    </div>
+  );
+}
+
+```
+
+
+---
+## FILE: src/components/SystemOverlay.tsx
+
+```tsx
+'use client';
+
+import { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+
+export type LogEntry = {
+  timestamp: string;
+  message: string;
+  id: string;
+};
+
+export default function SystemOverlay({ logs }: { logs: LogEntry[] }) {
+  const [isOnline, setIsOnline] = useState(true);
+
+  useEffect(() => {
+    setIsOnline(navigator.onLine);
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
+  return (
+    <>
+      {/* System Log (Bottom Right) */}
+      <div className="fixed bottom-12 right-4 z-[90] w-64 pointer-events-none hidden lg:block">
+        <div className="space-y-1">
+          <AnimatePresence mode="popLayout">
+            {logs.slice(-5).map((log) => (
+              <motion.div
+                key={log.id}
+                initial={{ opacity: 0, x: 20, scale: 0.95 }}
+                animate={{ opacity: 1, x: 0, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                className="bg-black/80 backdrop-blur-md text-[10px] font-mono text-green-400 p-2 border-l-4 border-green-500 rounded-sm shadow-xl"
+              >
+                <span className="opacity-50 mr-2">[{log.timestamp}]</span>
+                {log.message}
+              </motion.div>
+            ))}
+          </AnimatePresence>
+        </div>
+      </div>
+
+      {/* Status Bar (Bottom) */}
+      <div className="fixed bottom-0 left-0 right-0 h-8 bg-black text-white z-[100] flex items-center justify-between px-4 font-mono text-[10px] border-t-2 border-white/10 select-none">
+        <div className="flex items-center gap-6">
+          <div className="flex items-center gap-2">
+            <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
+            <span className="font-bold tracking-widest">STATUS: READY</span>
+          </div>
+          <div className="flex items-center gap-2">
+             <span className={`w-1.5 h-1.5 ${isOnline ? 'bg-blue-500' : 'bg-red-500'} rounded-full`} />
+             <span className="uppercase">NETWORK: {isOnline ? 'ONLINE' : 'OFFLINE'}</span>
+          </div>
+          <div className="hidden md:block opacity-50">
+             MODE: INTERACTIVE
+          </div>
+        </div>
+        <div className="flex items-center gap-4">
+           <div className="hidden sm:block">
+              OS_BUILD: v2.0.4-PROD
+           </div>
+           <div className="font-bold bg-white text-black px-2 py-0.5 rounded-sm">
+              {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })}
+           </div>
+        </div>
+      </div>
+    </>
+  );
+}
+
+```
+
+
+---
+## FILE: src/components/Topbar.tsx
+
+```tsx
+'use client';
+
+import Clock from './Clock';
+import { motion } from 'framer-motion';
+
+interface TopbarProps {
+  onEmailClick?: () => void;
+}
+
+export default function Topbar({ onEmailClick }: TopbarProps) {
+  return (
+    <motion.div
+      initial={{ y: -100 }}
+      animate={{ y: 0 }}
+      className="fixed top-0 left-0 right-0 bg-black text-white z-[90] border-b-2 border-white/10"
+    >
+      <div className="flex items-center justify-between px-4 py-3">
+        {/* Left: Name */}
+        <div className="flex items-center gap-3">
+          {/* <div className="w-6 h-6 bg-white flex items-center justify-center rounded-sm">
+             <span className="text-black font-mono font-bold text-xs">R</span>
+          </div> */}
+          <h1 className="font-display text-lg font-bold tracking-tighter uppercase">Adnan Rafi</h1>
+        </div>
+
+        {/* Center: Desktop Only */}
+        <div className="hidden lg:flex items-center gap-2 flex-1 justify-center px-8">
+          <div className="h-[2px] bg-white/20 flex-1 max-w-[100px]"></div>
+          <span className="text-[10px] font-mono font-bold text-white/40 uppercase tracking-[0.3em]">Kernel_Interface</span>
+          <div className="h-[2px] bg-white/20 flex-1 max-w-[100px]"></div>
+        </div>
+
+        {/* Right: Email and Time */}
+        <div className="flex items-center gap-4">
+          <button
+            onClick={onEmailClick}
+            aria-label="Send email"
+            className="hidden sm:flex items-center gap-2 text-[10px] font-mono font-bold hover:bg-white hover:text-black px-2 py-1 border border-white/30 rounded transition-all"
+          >
+            <span className="text-sm">✉</span>
+            <span>CONTACT_ME</span>
+          </button>
+          <div className="h-4 w-[1px] bg-white/20 hidden sm:block"></div>
+          <Clock />
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
+```
+
+
+---
+## FILE: src/components/Window.tsx
+
+```tsx
+'use client';
+
+import { motion, AnimatePresence } from 'framer-motion';
+import { ReactNode, useRef } from 'react';
+
+interface WindowProps {
+  isOpen: boolean;
+  onClose: () => void;
+  title: string;
+  children: ReactNode;
+  maxWidth?: string;
+  zIndex?: number;
+  onFocus?: () => void;
+}
+
+export default function Window({
+  isOpen,
+  onClose,
+  title,
+  children,
+  maxWidth = 'max-w-3xl',
+  zIndex = 40,
+  onFocus,
+}: WindowProps) {
+  const constraintsRef = useRef(null);
+
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <>
+          {/* Backdrop (Only for Desktop if we want to dim everything, but the user asked for stacking, so maybe no backdrop or a light one) */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={onClose}
+            className="fixed inset-0 bg-black/10 z-30 backdrop-blur-[1px] lg:block hidden"
+          />
+
+          {/* Window Container (Full screen on mobile, draggable on desktop) */}
+          <motion.div
+            ref={constraintsRef}
+            className="fixed inset-0 pointer-events-none"
+            style={{ zIndex }}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 20 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 400 }}
+              drag
+              dragMomentum={false}
+              dragConstraints={constraintsRef}
+              onPointerDown={onFocus}
+              className={`pointer-events-auto absolute 
+                lg:top-1/2 lg:left-1/2 lg:-translate-x-1/2 lg:-translate-y-1/2 
+                top-0 left-0 right-0 bottom-0 lg:bottom-auto lg:right-auto
+                ${maxWidth} w-full lg:w-11/12 max-h-screen lg:max-h-[90vh] flex flex-col`}
+            >
+              <div className="pixel-border bg-white shadow-2xl overflow-hidden flex flex-col h-full m-2 lg:m-0">
+                {/* Window Header */}
+                <div 
+                  className="window-header flex justify-between items-center cursor-grab active:cursor-grabbing select-none"
+                  aria-label={`Drag ${title} window`}
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="text-white/50 text-xs font-mono">■</span>
+                    <h2 className="text-white font-mono font-bold text-sm lg:text-base truncate">{title}</h2>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={onClose}
+                      className="bg-red-500/20 border-2 border-red-500/50 text-red-500 text-xs hover:bg-red-500 hover:text-white w-6 h-6 flex items-center justify-center rounded transition-colors"
+                      aria-label={`Close ${title} window`}
+                    >
+                      ✕
+                    </button>
+                  </div>
+                </div>
+
+                {/* Window Body */}
+                <div className="window-body overflow-y-auto flex-1 p-4 lg:p-6 bg-white relative">
+                  {/* Sticky close button for mobile as requested */}
+                  <div className="lg:hidden sticky top-0 right-0 flex justify-end mb-4 z-10">
+                     <button
+                        onClick={onClose}
+                        className="bg-black text-white px-3 py-1 text-xs font-mono rounded border-2 border-black"
+                        aria-label="Close"
+                      >
+                        CLOSE [X]
+                      </button>
+                  </div>
+                  {children}
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
+  );
+}
+
+```
+
+
+---
+## FILE: src/data/icons.ts
+
+```ts
+import { Icon } from '@/types';
+
+export const DESKTOP_ICONS: Icon[] = [
   {
-    id: 'coduck',
-    name: 'Coduck',
-    title: 'CoDuck',
-    subtitle: 'Innovation in Web Maintenance',
-    description:
-      'CoDuck is a platform specialized in offering unlimited maintenance and technical support for websites. Designed for small businesses, it ensures content updating, technical troubleshooting, speed optimization and design customization. All managed efficiently through Trello. CoDuck\'s website, built on WordPress with integrations in Stripe, JavaScript, and PHP, focused on a minimalist design optimized for conversion. The main challenge was to create a fast and functional platform that facilitated the user experience, ensuring intuitive and efficient navigation.',
-    features: [
-      'Unlimited maintenance and support',
-      'Content updating and optimization',
-      'Speed optimization',
-      'Design customization',
-      'Trello-based workflow management',
-      'Stripe payment integration',
-    ],
-    tech: ['WordPress', 'Elementor', 'PHP', 'JavaScript', 'Stripe'],
-    image: 'https://i.postimg.cc/QMVmwqTk/formal-dp1687098306233.jpg',
-    links: {
-      live: '#',
-      github: '#',
-    },
+    id: 'projects',
+    label: 'Projects',
+    icon: '🗂️',
+    description: 'Explore what I’ve been building',
   },
+  {
+    id: 'about',
+    label: 'About Me',
+    icon: '👤',
+    description: 'Learn more about my background',
+  },
+  {
+    id: 'links',
+    label: 'Links',
+    icon: '🔗',
+    description: 'Get in touch with me',
+  },
+];
+
+```
+
+
+---
+## FILE: src/data/links.ts
+
+```ts
+import { Link } from '@/types';
+
+export const LINKS: Link[] = [
+  {
+    title: 'GitHub',
+    url: 'https://github.com/RafexStrike',
+    icon: '🔗',
+  },
+  {
+    title: 'LinkedIn',
+    url: 'https://www.linkedin.com/in/adnan-rafi/',
+    icon: '💼',
+  },
+  {
+    title: 'Email',
+    url: 'mailto:adnanrahmanrafi515@gmail.com',
+    icon: '✉️',
+  },
+];
+
+```
+
+
+---
+## FILE: src/data/profile.ts
+
+```ts
+import { Profile } from '@/types';
+
+export const PROFILE: Profile = {
+  name: 'Adnan Rafi',
+  role: 'Full Stack Developer',
+  summary:
+    'Aspiring full-stack developer focused on building scalable systems and real-world products. Passionate about AI, web technologies, and creating intuitive user experiences.',
+  skills: [
+    {
+      category: 'Frontend',
+      items: ['React', 'Next.js', 'TypeScript', 'Tailwind CSS', 'Framer Motion'],
+    },
+    {
+      category: 'Backend',
+      items: ['Node.js', 'Express', 'PostgreSQL', 'MongoDB', 'Prisma'],
+    },
+    {
+      category: 'AI & ML',
+      items: ['LLMs', 'RAG', 'Embeddings', 'HuggingFace'],
+    },
+    {
+      category: 'DevOps',
+      items: ['Docker', 'Vercel', 'Render', 'GitHub Actions'],
+    },
+  ],
+  education: [
+    {
+      degree: 'BSc IoT & Robotics Engineering',
+      school: 'University of Engineering',
+      year: '4th Year',
+    },
+  ],
+};
+
+```
+
+
+---
+## FILE: src/data/projects.ts
+
+```ts
+import { Project } from '@/types';
+
+export const PROJECTS: Project[] = [
   {
     id: 'luminal',
     name: 'Luminal',
@@ -7599,386 +8689,127 @@ const PROJECTS: Project[] = [
       github: 'https://github.com/RafexStrike/FlatMotion-Client',
     },
   },
-];
-
-const DESKTOP_ICONS = [
   {
-    id: 'projects',
-    label: 'Projects',
-    icon: '🗂️',
-    description: 'View my projects',
-  },
-  {
-    id: 'about',
-    label: 'About Me',
-    icon: '👤',
-    description: 'About me',
-  },
-  {
-    id: 'links',
-    label: 'Links',
-    icon: '🔗',
-    description: 'Contact & socials',
-  },
-];
-
-const SKILLS = [
-  {
-    category: 'Frontend',
-    items: ['React', 'Next.js', 'TypeScript', 'Tailwind CSS', 'Framer Motion'],
-  },
-  {
-    category: 'Backend',
-    items: ['Node.js', 'Express', 'PostgreSQL', 'MongoDB', 'Prisma'],
-  },
-  {
-    category: 'AI & ML',
-    items: ['LLMs', 'RAG', 'Embeddings', 'HuggingFace'],
-  },
-  {
-    category: 'DevOps',
-    items: ['Docker', 'Vercel', 'Render', 'GitHub Actions'],
+    id: 'coduck',
+    name: 'Coduck',
+    title: 'CoDuck',
+    subtitle: 'Innovation in Web Maintenance',
+    description:
+      'CoDuck is a platform specialized in offering unlimited maintenance and technical support for websites. Designed for small businesses, it ensures content updating, technical troubleshooting, speed optimization and design customization. All managed efficiently through Trello. CoDuck\'s website, built on WordPress with integrations in Stripe, JavaScript, and PHP, focused on a minimalist design optimized for conversion. The main challenge was to create a fast and functional platform that facilitated the user experience, ensuring intuitive and efficient navigation.',
+    features: [
+      'Unlimited maintenance and support',
+      'Content updating and optimization',
+      'Speed optimization',
+      'Design customization',
+      'Trello-based workflow management',
+      'Stripe payment integration',
+    ],
+    tech: ['WordPress', 'Elementor', 'PHP', 'JavaScript', 'Stripe'],
+    image: 'https://i.postimg.cc/QMVmwqTk/formal-dp1687098306233.jpg',
+    links: {
+      live: 'https://coduck.co',
+      github: '', // Hidden if empty
+    },
   },
 ];
 
-const EDUCATION = [
-  {
-    degree: 'BSc IoT & Robotics Engineering',
-    school: 'University of Engineering',
-    year: '4th Year',
-  },
-];
+```
 
-export default function Home() {
-  const [openWindow, setOpenWindow] = useState<string | null>(null);
 
-  const handleIconClick = (id: string) => {
-    setOpenWindow(id);
+---
+## FILE: src/hooks/useProjects.ts
+
+```ts
+import { useState, useMemo } from 'react';
+import { Project } from '@/types';
+import { PROJECTS } from '@/data/projects';
+
+export function useProjects() {
+  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(PROJECTS[0]?.id || null);
+
+  const selectedProject = useMemo(() => {
+    return PROJECTS.find((p) => p.id === selectedProjectId) || null;
+  }, [selectedProjectId]);
+
+  const selectProject = (id: string) => {
+    setSelectedProjectId(id);
   };
 
-  const handleCloseWindow = () => {
-    setOpenWindow(null);
+  return {
+    projects: PROJECTS,
+    selectedProject,
+    selectProject,
   };
+}
 
-  return (
-    <main className="min-h-screen bg-gray-100">
-      {/* Topbar */}
-      <Topbar onEmailClick={() => window.location.href = 'mailto:adnanrahmanrafi515@gmail.com'} />
+```
 
-      {/* Main Content Area */}
-      <div className="pt-16 pb-8">
-        {/* Desktop Sidebar */}
-        <Sidebar icons={DESKTOP_ICONS} onIconClick={handleIconClick} />
 
-        {/* Mobile Navigation */}
-        <div className="lg:hidden px-4 py-8">
-          <div className="grid grid-cols-3 gap-4">
-            {DESKTOP_ICONS.map((icon) => (
-              <button
-                key={icon.id}
-                onClick={() => handleIconClick(icon.id)}
-                className="flex flex-col items-center gap-2 p-4 border-2 border-black rounded hover:bg-black hover:text-white transition-all"
-              >
-                <span className="text-2xl">{icon.icon}</span>
-                <span className="text-xs font-mono font-semibold text-center">{icon.label}</span>
-              </button>
-            ))}
-          </div>
-        </div>
+---
+## FILE: src/hooks/useWindowManager.ts
 
-        {/* Welcome Message for Desktop */}
-        {openWindow === null && (
-          <div className="flex items-center justify-center min-h-screen -mt-16">
-            <div className="text-center">
-              <h1 className="text-5xl md:text-6xl font-display font-bold mb-4">Welcome</h1>
-              <p className="text-lg text-gray-700 font-mono">to RafiHeras' Portfolio</p>
-              <p className="text-sm text-gray-600 mt-4">Click an icon to explore</p>
-            </div>
-          </div>
-        )}
-      </div>
+```ts
+import { useState, useCallback } from 'react';
 
-      {/* Windows */}
-      <Window
-        isOpen={openWindow === 'projects'}
-        onClose={handleCloseWindow}
-        title="Projects"
-        maxWidth="max-w-5xl"
-      >
-        <ProjectView projects={PROJECTS} />
-      </Window>
+export type WindowState = {
+  id: string;
+  isOpen: boolean;
+  zIndex: number;
+};
 
-      <Window
-        isOpen={openWindow === 'about'}
-        onClose={handleCloseWindow}
-        title="About Me"
-        maxWidth="max-w-3xl"
-      >
-        <AboutMe
-          name="Adnan Rafi"
-          role="Full Stack Developer"
-          summary="Aspiring full-stack developer focused on building scalable systems and real-world products. Passionate about AI, web technologies, and creating intuitive user experiences."
-          skills={SKILLS}
-          education={EDUCATION}
-        />
-      </Window>
-
-      <Window
-        isOpen={openWindow === 'links'}
-        onClose={handleCloseWindow}
-        title="Get In Touch"
-        maxWidth="max-w-2xl"
-      >
-        <Links
-          links={[
-            {
-              title: 'GitHub',
-              url: 'https://github.com/RafexStrike',
-              icon: '🔗',
-            },
-            {
-              title: 'LinkedIn',
-              url: 'https://www.linkedin.com/in/adnan-rafi/',
-              icon: '💼',
-            },
-            {
-              title: 'Portfolio',
-              url: 'https://adnan-rafi.netlify.app/',
-              icon: '🌐',
-            },
-            {
-              title: 'Email',
-              url: 'mailto:adnanrahmanrafi515@gmail.com',
-              icon: '✉️',
-            },
-          ]}
-        />
-      </Window>
-    </main>
+export function useWindowManager(initialWindows: string[]) {
+  const [windows, setWindows] = useState<WindowState[]>(
+    initialWindows.map((id, index) => ({ id, isOpen: false, zIndex: 10 + index }))
   );
+  const [activeWindow, setActiveWindow] = useState<string | null>(null);
+  const [maxZIndex, setMaxZIndex] = useState(20);
+
+  const openWindow = useCallback((id: string) => {
+    setWindows((prev) =>
+      prev.map((w) =>
+        w.id === id ? { ...w, isOpen: true, zIndex: maxZIndex + 1 } : w
+      )
+    );
+    setMaxZIndex((prev) => prev + 1);
+    setActiveWindow(id);
+  }, [maxZIndex]);
+
+  const closeWindow = useCallback((id: string) => {
+    setWindows((prev) =>
+      prev.map((w) => (w.id === id ? { ...w, isOpen: false } : w))
+    );
+    if (activeWindow === id) {
+      setActiveWindow(null);
+    }
+  }, [activeWindow]);
+
+  const focusWindow = useCallback((id: string) => {
+    setWindows((prev) =>
+      prev.map((w) =>
+        w.id === id ? { ...w, zIndex: maxZIndex + 1 } : w
+      )
+    );
+    setMaxZIndex((prev) => prev + 1);
+    setActiveWindow(id);
+  }, [maxZIndex]);
+
+  return {
+    windows,
+    openWindow,
+    closeWindow,
+    focusWindow,
+    activeWindow,
+  };
 }
 
 ```
 
 
 ---
-## FILE: src/components/AboutMe.tsx
+## FILE: src/types/index.ts
 
-```tsx
-'use client';
-
-import { motion } from 'framer-motion';
-
-interface AboutMeProps {
-  name?: string;
-  role?: string;
-  summary?: string;
-  skills?: {
-    category: string;
-    items: string[];
-  }[];
-  education?: {
-    degree: string;
-    school: string;
-    year?: string;
-  }[];
-}
-
-export default function AboutMe({
-  name = 'Adnan Rafi',
-  role = 'Full Stack Developer',
-  summary = 'Aspiring full-stack developer focused on building scalable systems and real-world products.',
-  skills = [],
-  education = [],
-}: AboutMeProps) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
-      className="space-y-6 max-w-2xl"
-    >
-      {/* Header */}
-      <div className="border-b-2 border-black pb-4">
-        <h2 className="text-3xl font-display font-bold mb-1">{name}</h2>
-        <p className="text-sm font-mono text-gray-700 mb-3">{role}</p>
-        <p className="text-sm leading-relaxed">{summary}</p>
-      </div>
-
-      {/* Skills */}
-      {skills.length > 0 && (
-        <div>
-          <h3 className="text-lg font-bold mb-3 font-display">SKILLS</h3>
-          <div className="space-y-3">
-            {skills.map((skill, idx) => (
-              <div key={idx}>
-                <p className="text-xs font-mono font-bold text-gray-600 mb-1">{skill.category}</p>
-                <div className="flex flex-wrap gap-2">
-                  {skill.items.map((item) => (
-                    <span
-                      key={item}
-                      className="px-3 py-1 border-2 border-black rounded text-xs font-mono bg-gray-100 hover:bg-black hover:text-white transition-all"
-                    >
-                      {item}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Education */}
-      {education.length > 0 && (
-        <div>
-          <h3 className="text-lg font-bold mb-3 font-display">EDUCATION</h3>
-          <div className="space-y-3">
-            {education.map((edu, idx) => (
-              <div
-                key={idx}
-                className="border-l-3 border-black pl-3 py-1"
-              >
-                <p className="font-mono font-bold text-sm">{edu.degree}</p>
-                <p className="text-xs text-gray-700">{edu.school}</p>
-                {edu.year && <p className="text-xs text-gray-600 font-mono">{edu.year}</p>}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-    </motion.div>
-  );
-}
-
-```
-
-
----
-## FILE: src/components/Clock.tsx
-
-```tsx
-'use client';
-
-import { useEffect, useState } from 'react';
-
-export default function Clock() {
-  const [time, setTime] = useState<string>('');
-
-  useEffect(() => {
-    setTime(new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
-    
-    const interval = setInterval(() => {
-      setTime(new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, []);
-
-  return <span className="font-mono text-sm">{time || '--:--:--'}</span>;
-}
-
-```
-
-
----
-## FILE: src/components/Links.tsx
-
-```tsx
-'use client';
-
-import { motion } from 'framer-motion';
-
-interface Link {
-  title: string;
-  url: string;
-  icon: string;
-}
-
-interface LinksProps {
-  links?: Link[];
-}
-
-export default function Links({
-  links = [
-    {
-      title: 'GitHub',
-      url: 'https://github.com/RafexStrike',
-      icon: '🔗',
-    },
-    {
-      title: 'LinkedIn',
-      url: 'https://www.linkedin.com/in/adnan-rafi/',
-      icon: '💼',
-    },
-    {
-      title: 'Portfolio',
-      url: 'https://adnan-rafi.netlify.app/',
-      icon: '🌐',
-    },
-    {
-      title: 'Email',
-      url: 'mailto:adnanrahmanrafi515@gmail.com',
-      icon: '✉',
-    },
-  ],
-}: LinksProps) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
-      className="space-y-4 max-w-md"
-    >
-      <div className="border-b-2 border-black pb-4">
-        <h2 className="text-2xl font-display font-bold">GET IN TOUCH</h2>
-        <p className="text-sm text-gray-700 mt-1">Let's connect and collaborate</p>
-      </div>
-
-      <div className="space-y-3">
-        {links.map((link, idx) => (
-          <motion.a
-            key={link.title}
-            href={link.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            initial={{ opacity: 0, x: -10 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: idx * 0.1, duration: 0.3 }}
-            className="flex items-center gap-3 p-3 border-2 border-black rounded hover:bg-black hover:text-white transition-all group"
-          >
-            <span className="text-2xl">{link.icon}</span>
-            <div className="flex-1">
-              <p className="font-mono font-bold text-sm">{link.title}</p>
-              <p className="text-xs opacity-70 group-hover:opacity-100">{link.url}</p>
-            </div>
-            <span className="text-xl group-hover:scale-125 transition-transform">→</span>
-          </motion.a>
-        ))}
-      </div>
-
-      <div className="pt-4 border-t-2 border-black text-xs text-gray-600">
-        <p>Built with Next.js, Tailwind CSS & Framer Motion</p>
-        <p className="mt-2">© 2024 Adnan Rafi. All rights reserved.</p>
-      </div>
-    </motion.div>
-  );
-}
-
-```
-
-
----
-## FILE: src/components/ProjectView.tsx
-
-```tsx
-'use client';
-
-import { useState } from 'react';
-import { motion } from 'framer-motion';
-import Image from 'next/image';
-
-interface Project {
+```ts
+export type Project = {
   id: string;
   name: string;
   title: string;
@@ -7991,304 +8822,39 @@ interface Project {
     live?: string;
     github?: string;
   };
-}
+};
 
-interface ProjectViewProps {
-  projects: Project[];
-}
-
-export default function ProjectView({ projects }: ProjectViewProps) {
-  const [selectedProject, setSelectedProject] = useState<Project>(projects[0]);
-
-  return (
-    <div className="flex flex-col lg:flex-row gap-6 h-full">
-      {/* Folder Sidebar */}
-      <div className="w-full lg:w-40 border-r-2 border-black pr-4">
-        <div className="mb-4">
-          <p className="text-xs font-mono font-bold mb-3 text-gray-600">PROJECTS</p>
-          <div className="space-y-2">
-            {projects.map((project) => (
-              <motion.button
-                key={project.id}
-                onClick={() => setSelectedProject(project)}
-                whileHover={{ scale: 1.02 }}
-                className={`w-full text-left px-3 py-2 border-2 border-black rounded text-sm font-mono transition-all ${
-                  selectedProject.id === project.id
-                    ? 'bg-black text-white font-bold'
-                    : 'bg-white text-black hover:bg-gray-100'
-                }`}
-              >
-                📁 {project.name}
-              </motion.button>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Project Content */}
-      <motion.div
-        key={selectedProject.id}
-        initial={{ opacity: 0, x: 10 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.3 }}
-        className="flex-1 flex flex-col gap-6"
-      >
-        {/* Header */}
-        <div>
-          <h2 className="text-2xl lg:text-3xl font-display font-bold mb-1">{selectedProject.title}</h2>
-          <p className="text-sm text-gray-700 font-mono">{selectedProject.subtitle}</p>
-        </div>
-
-        {/* Description & Features */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div>
-            <p className="text-sm leading-relaxed mb-4">{selectedProject.description}</p>
-            {selectedProject.features.length > 0 && (
-              <div>
-                <h3 className="font-bold text-sm mb-2">Features:</h3>
-                <ul className="text-xs space-y-1 ml-4">
-                  {selectedProject.features.map((feature, idx) => (
-                    <li key={idx} className="list-disc">
-                      {feature}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-          </div>
-
-          {/* Image */}
-          {selectedProject.image && (
-            <div className="border-3 border-black rounded overflow-hidden bg-gray-200">
-              <div className="relative w-full h-48 lg:h-64">
-                <Image
-                  src={selectedProject.image}
-                  alt={selectedProject.title}
-                  fill
-                  className="object-cover"
-                />
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Tech Stack */}
-        <div>
-          <p className="text-xs font-mono font-bold mb-2">TECH STACK</p>
-          <div className="flex flex-wrap gap-2">
-            {selectedProject.tech.map((tech) => (
-              <span
-                key={tech}
-                className="px-3 py-1 border-2 border-black rounded text-xs font-mono bg-gray-100 hover:bg-black hover:text-white transition-all"
-              >
-                {tech}
-              </span>
-            ))}
-          </div>
-        </div>
-
-        {/* Links */}
-        {selectedProject.links && (
-          <div className="flex gap-2 flex-wrap">
-            {selectedProject.links.live && (
-              <a
-                href={selectedProject.links.live}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="px-4 py-2 border-2 border-black rounded font-mono text-sm hover:bg-black hover:text-white transition-all"
-              >
-                → Live Demo
-              </a>
-            )}
-            {selectedProject.links.github && (
-              <a
-                href={selectedProject.links.github}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="px-4 py-2 border-2 border-black rounded font-mono text-sm hover:bg-black hover:text-white transition-all"
-              >
-                → GitHub
-              </a>
-            )}
-          </div>
-        )}
-      </motion.div>
-    </div>
-  );
-}
-
-```
-
-
----
-## FILE: src/components/Sidebar.tsx
-
-```tsx
-'use client';
-
-import { motion } from 'framer-motion';
-
-interface DesktopIcon {
+export type Icon = {
   id: string;
   label: string;
   icon: string;
-  description?: string;
-}
+  description: string;
+};
 
-interface SidebarProps {
-  icons: DesktopIcon[];
-  onIconClick: (id: string) => void;
-}
+export type SkillCategory = {
+  category: string;
+  items: string[];
+};
 
-export default function Sidebar({ icons, onIconClick }: SidebarProps) {
-  return (
-    <div className="hidden lg:fixed right-0 top-20 flex-col gap-8 p-8 w-40">
-      {icons.map((icon, index) => (
-        <motion.button
-          key={icon.id}
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: index * 0.1 }}
-          onClick={() => onIconClick(icon.id)}
-          className="flex flex-col items-center gap-2 cursor-pointer hover:opacity-70 transition-opacity group"
-        >
-          <div className="w-16 h-16 border-3 border-black rounded flex items-center justify-center bg-white text-3xl hover:bg-black hover:text-white transition-all">
-            {icon.icon}
-          </div>
-          <span className="text-xs font-mono text-center font-semibold text-black group-hover:text-black">
-            {icon.label}
-          </span>
-          {icon.description && (
-            <span className="text-[10px] text-gray-600 text-center group-hover:text-black">
-              {icon.description}
-            </span>
-          )}
-        </motion.button>
-      ))}
-    </div>
-  );
-}
+export type Education = {
+  degree: string;
+  school: string;
+  year: string;
+};
 
-```
-
-
----
-## FILE: src/components/Topbar.tsx
-
-```tsx
-'use client';
-
-import Clock from './Clock';
-
-interface TopbarProps {
-  onEmailClick?: () => void;
-}
-
-export default function Topbar({ onEmailClick }: TopbarProps) {
-  return (
-    <div className="fixed top-0 left-0 right-0 bg-black text-white z-40 border-b-2 border-black">
-      <div className="flex items-center justify-between px-4 py-3">
-        {/* Left: Name */}
-        <div className="flex items-center gap-3">
-          <h1 className="font-display text-lg font-bold tracking-tight">RafiHeras</h1>
-        </div>
-
-        {/* Center: Decorative lines */}
-        <div className="hidden md:flex items-center gap-2 flex-1 justify-center px-8">
-          <div className="h-px bg-white flex-1 max-w-xs opacity-50"></div>
-          <span className="opacity-30 text-xs">sys</span>
-          <div className="h-px bg-white flex-1 max-w-xs opacity-50"></div>
-        </div>
-
-        {/* Right: Email and Time */}
-        <div className="flex items-center gap-4">
-          <button
-            onClick={onEmailClick}
-            className="hidden sm:block text-xs hover:bg-white hover:text-black px-2 py-1 border border-white rounded"
-          >
-            ✉ adnanrahmanrafi515@gmail.com
-          </button>
-          <Clock />
-        </div>
-      </div>
-    </div>
-  );
-}
-
-```
-
-
----
-## FILE: src/components/Window.tsx
-
-```tsx
-'use client';
-
-import { motion, AnimatePresence } from 'framer-motion';
-import { ReactNode } from 'react';
-
-interface WindowProps {
-  isOpen: boolean;
-  onClose: () => void;
+export type Link = {
   title: string;
-  children: ReactNode;
-  maxWidth?: string;
-  fullScreen?: boolean;
-}
+  url: string;
+  icon: string;
+};
 
-export default function Window({
-  isOpen,
-  onClose,
-  title,
-  children,
-  maxWidth = 'max-w-3xl',
-  fullScreen = false,
-}: WindowProps) {
-  return (
-    <AnimatePresence>
-      {isOpen && (
-        <>
-          {/* Backdrop */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={onClose}
-            className="fixed inset-0 bg-black/30 z-30 backdrop-blur-sm"
-          />
-
-          {/* Window */}
-          <motion.div
-            initial={{ scale: 0.8, opacity: 0, y: 20 }}
-            animate={{ scale: 1, opacity: 1, y: 0 }}
-            exit={{ scale: 0.8, opacity: 0, y: 20 }}
-            transition={{ type: 'spring', damping: 25, stiffness: 400 }}
-            className={`fixed z-40 ${fullScreen ? 'inset-0' : `top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 ${maxWidth} w-11/12 max-h-[90vh]`}`}
-          >
-            <div className="pixel-border bg-white shadow-lg overflow-hidden flex flex-col h-full">
-              {/* Window Header */}
-              <div className="window-header flex justify-between items-center">
-                <h2 className="text-white font-mono font-bold">{title}</h2>
-                <button
-                  onClick={onClose}
-                  className="bg-transparent border-0 text-white text-xl hover:bg-white hover:text-black w-6 h-6 flex items-center justify-center rounded"
-                  aria-label="Close window"
-                >
-                  ✕
-                </button>
-              </div>
-
-              {/* Window Body */}
-              <div className="window-body overflow-y-auto flex-1">
-                {children}
-              </div>
-            </div>
-          </motion.div>
-        </>
-      )}
-    </AnimatePresence>
-  );
-}
+export type Profile = {
+  name: string;
+  role: string;
+  summary: string;
+  skills: SkillCategory[];
+  education: Education[];
+};
 
 ```
 

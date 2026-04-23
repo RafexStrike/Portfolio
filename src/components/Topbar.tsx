@@ -9,7 +9,7 @@ interface TopbarProps {
 
 export default function Topbar({ onEmailClick }: TopbarProps) {
   return (
-    <motion.div 
+    <motion.div
       initial={{ y: -100 }}
       animate={{ y: 0 }}
       className="fixed top-0 left-0 right-0 bg-black text-white z-[90] border-b-2 border-white/10"
@@ -17,9 +17,9 @@ export default function Topbar({ onEmailClick }: TopbarProps) {
       <div className="flex items-center justify-between px-4 py-3">
         {/* Left: Name */}
         <div className="flex items-center gap-3">
-          <div className="w-6 h-6 bg-white flex items-center justify-center rounded-sm">
+          {/* <div className="w-6 h-6 bg-white flex items-center justify-center rounded-sm">
              <span className="text-black font-mono font-bold text-xs">R</span>
-          </div>
+          </div> */}
           <h1 className="font-display text-lg font-bold tracking-tighter uppercase">Adnan Rafi</h1>
         </div>
 

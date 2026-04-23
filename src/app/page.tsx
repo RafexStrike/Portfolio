@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import Topbar from '@/components/Topbar';
 import Sidebar from '@/components/Sidebar';
 import Window from '@/components/Window';
@@ -25,9 +25,10 @@ export default function Home() {
     DESKTOP_ICONS.map((i) => i.id)
   );
 
+  const logIdRef = useRef(0);
   const addLog = useCallback((message: string) => {
     const timestamp = new Date().toLocaleTimeString([], { hour12: false });
-    setLogs((prev) => [...prev, { id: Date.now(), timestamp, message }]);
+    setLogs((prev) => [...prev, { id: `${Date.now()}-${logIdRef.current++}`, timestamp, message }]);
   }, []);
 
   useEffect(() => {

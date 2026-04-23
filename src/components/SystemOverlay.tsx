@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 export type LogEntry = {
   timestamp: string;
   message: string;
-  id: number;
+  id: string;
 };
 
 export default function SystemOverlay({ logs }: { logs: LogEntry[] }) {
