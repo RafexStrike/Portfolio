@@ -31,6 +31,14 @@ export default function Home() {
     setLogs((prev) => [...prev, { id: `${Date.now()}-${logIdRef.current++}`, timestamp, message }]);
   }, []);
 
+  // Force exit booting after 1.5s
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsBooting(false);
+    }, 1500);
+    return () => clearTimeout(timer);
+  }, []);
+
   useEffect(() => {
     if (!isBooting) {
       addLog('System initialized');
@@ -38,7 +46,7 @@ export default function Home() {
     }
   }, [isBooting, addLog]);
 
-  const handleOpenWindow = (id: string) => {
+  const handleIconClick = (id: string) => {
     const icon = DESKTOP_ICONS.find(i => i.id === id);
     addLog(`Opening ${icon?.label || id}...`);
     openWindow(id);
@@ -50,9 +58,9 @@ export default function Home() {
   };
 
   const commands = [
-    { id: 'open-projects', label: 'open projects', action: () => handleOpenWindow('projects') },
-    { id: 'open-about', label: 'open about', action: () => handleOpenWindow('about') },
-    { id: 'open-links', label: 'open links', action: () => handleOpenWindow('links') },
+    { id: 'open-projects', label: 'open projects', action: () => handleIconClick('projects') },
+    { id: 'open-about', label: 'open about', action: () => handleIconClick('about') },
+    { id: 'open-links', label: 'open links', action: () => handleIconClick('links') },
     { id: 'clear-logs', label: 'clear logs', action: () => setLogs([]) },
   ];
 
@@ -71,7 +79,7 @@ export default function Home() {
       {/* Main Content Area */}
       <div className="pt-20 pb-12">
         {/* Desktop Sidebar (Right side as updated) */}
-        <Sidebar icons={DESKTOP_ICONS} onIconClick={handleOpenWindow} />
+        <Sidebar icons={DESKTOP_ICONS} onClick={handleIconClick} />
 
         {/* Mobile Section-Based Layout */}
         <div className="lg:hidden flex flex-col gap-12 px-6 py-8">
@@ -88,7 +96,7 @@ export default function Home() {
                 </p>
                 <div className="flex gap-2">
                    <button 
-                     onClick={() => handleOpenWindow('projects')}
+                     onClick={() => handleIconClick('projects')}
                      className="bg-black text-white px-6 py-3 font-mono font-bold text-xs rounded-sm shadow-[4px_4px_0px_0px_rgba(0,0,0,0.2)]"
                    >
                      VIEW_PROJECTS()
@@ -103,7 +111,7 @@ export default function Home() {
             {DESKTOP_ICONS.map((icon) => (
               <button
                 key={icon.id}
-                onClick={() => handleOpenWindow(icon.id)}
+                onClick={() => handleIconClick(icon.id)}
                 className="flex items-center gap-4 p-5 bg-white border-2 border-black rounded-sm shadow-[6px_6px_0px_0px_rgba(0,0,0,0.1)] active:translate-x-1 active:translate-y-1 active:shadow-none transition-all"
                 aria-label={`Open ${icon.label}`}
               >
@@ -139,13 +147,13 @@ export default function Home() {
                    </h1>
                 </motion.div>
                 <div className="mt-[-4rem]">
-                  <h2 className="text-6xl font-display font-bold mb-4 tracking-tighter">Welcome</h2>
-                  <p className="text-lg text-gray-500 font-mono tracking-widest uppercase">Kernel Version 2.0.4-PROD</p>
-                  <div className="mt-8 flex items-center justify-center gap-4 text-xs font-mono text-gray-400">
-                     <span>PRESS <kbd className="bg-gray-200 px-2 py-1 border border-black/10 rounded font-bold text-black">/</kbd> FOR COMMANDS</span>
-                     <span className="w-1 h-1 bg-gray-300 rounded-full" />
-                     <span>CLICK ICONS TO INTERACT</span>
-                  </div>
+                   <h2 className="text-6xl font-display font-bold mb-4 tracking-tighter">Welcome</h2>
+                   <p className="text-lg text-gray-500 font-mono tracking-widest uppercase">Kernel Version 2.0.4-PROD</p>
+                   <div className="mt-8 flex items-center justify-center gap-4 text-xs font-mono text-gray-400">
+                      <span>PRESS <kbd className="bg-gray-200 px-2 py-1 border border-black/10 rounded font-bold text-black">/</kbd> FOR COMMANDS</span>
+                      <span className="w-1 h-1 bg-gray-300 rounded-full" />
+                      <span>CLICK ICONS TO INTERACT</span>
+                   </div>
                 </div>
               </div>
             </motion.div>
