@@ -1,55 +1,30 @@
 'use client';
 
 import { motion } from 'framer-motion';
-
-interface Link {
-  title: string;
-  url: string;
-  icon: string;
-}
+import { Link } from '@/types';
 
 interface LinksProps {
-  links?: Link[];
+  links: Link[];
 }
 
-export default function Links({
-  links = [
-    {
-      title: 'GitHub',
-      url: 'https://github.com/RafexStrike',
-      icon: '🔗',
-    },
-    {
-      title: 'LinkedIn',
-      url: 'https://www.linkedin.com/in/adnan-rafi/',
-      icon: '💼',
-    },
-    {
-      title: 'Portfolio',
-      url: 'https://adnan-rafi.netlify.app/',
-      icon: '🌐',
-    },
-    {
-      title: 'Email',
-      url: 'mailto:adnanrahmanrafi515@gmail.com',
-      icon: '✉',
-    },
-  ],
-}: LinksProps) {
+export default function Links({ links }: LinksProps) {
+  // Gracefully hide missing links
+  const activeLinks = links.filter(link => link.url && link.url !== '#' && link.url !== 'mailto:');
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      className="space-y-4 max-w-md"
+      className="space-y-6 max-w-lg"
     >
-      <div className="border-b-2 border-black pb-4">
-        <h2 className="text-2xl font-display font-bold">GET IN TOUCH</h2>
-        <p className="text-sm text-gray-700 mt-1">Let's connect and collaborate</p>
+      <div className="border-b-2 border-black/10 pb-4">
+        <h2 className="text-2xl font-display font-bold tracking-tight">COMMUNICATION_CHANNELS</h2>
+        <p className="text-sm text-gray-500 font-mono mt-1 italic">Establish a connection for collaboration</p>
       </div>
 
-      <div className="space-y-3">
-        {links.map((link, idx) => (
+      <div className="grid grid-cols-1 gap-3">
+        {activeLinks.map((link, idx) => (
           <motion.a
             key={link.title}
             href={link.url}
@@ -58,21 +33,27 @@ export default function Links({
             initial={{ opacity: 0, x: -10 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: idx * 0.1, duration: 0.3 }}
-            className="flex items-center gap-3 p-3 border-2 border-black rounded hover:bg-black hover:text-white transition-all group"
+            aria-label={`Visit my ${link.title}`}
+            className="flex items-center gap-4 p-4 border-2 border-black rounded-sm bg-white hover:bg-black hover:text-white transition-all group shadow-[4px_4px_0px_0px_rgba(0,0,0,0.05)] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px]"
           >
-            <span className="text-2xl">{link.icon}</span>
+            <span className="text-3xl grayscale group-hover:grayscale-0 transition-all">{link.icon}</span>
             <div className="flex-1">
-              <p className="font-mono font-bold text-sm">{link.title}</p>
-              <p className="text-xs opacity-70 group-hover:opacity-100">{link.url}</p>
+              <p className="font-mono font-bold text-sm tracking-tighter uppercase">{link.title}</p>
+              <p className="text-[10px] font-mono opacity-50 truncate group-hover:opacity-100">{link.url.replace('mailto:', '')}</p>
             </div>
-            <span className="text-xl group-hover:scale-125 transition-transform">→</span>
+            <div className="w-8 h-8 flex items-center justify-center border-2 border-current rounded-full group-hover:rotate-45 transition-transform">
+               <span className="text-sm">↗</span>
+            </div>
           </motion.a>
         ))}
       </div>
 
-      <div className="pt-4 border-t-2 border-black text-xs text-gray-600">
-        <p>Built with Next.js, Tailwind CSS & Framer Motion</p>
-        <p className="mt-2">© 2024 Adnan Rafi. All rights reserved.</p>
+      <div className="pt-6 border-t-2 border-black/5 flex flex-col gap-2">
+        <div className="flex items-center gap-2">
+           <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+           <p className="text-[10px] font-mono font-bold text-gray-400 uppercase tracking-widest">System Status: Active</p>
+        </div>
+        <p className="text-[10px] font-mono text-gray-400">© {new Date().getFullYear()} ADNAN_RAFI. ALL_RIGHTS_RESERVED.</p>
       </div>
     </motion.div>
   );

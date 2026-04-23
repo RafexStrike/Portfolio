@@ -1,250 +1,177 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Topbar from '@/components/Topbar';
 import Sidebar from '@/components/Sidebar';
 import Window from '@/components/Window';
 import ProjectView from '@/components/ProjectView';
 import AboutMe from '@/components/AboutMe';
 import Links from '@/components/Links';
+import BootSequence from '@/components/BootSequence';
+import CommandPalette from '@/components/CommandPalette';
+import SystemOverlay, { LogEntry } from '@/components/SystemOverlay';
 
-interface Project {
-  id: string;
-  name: string;
-  title: string;
-  subtitle: string;
-  description: string;
-  features: string[];
-  tech: string[];
-  image?: string;
-  links?: {
-    live?: string;
-    github?: string;
-  };
-}
-
-const PROJECTS: Project[] = [
-  {
-    id: 'coduck',
-    name: 'Coduck',
-    title: 'CoDuck',
-    subtitle: 'Innovation in Web Maintenance',
-    description:
-      'CoDuck is a platform specialized in offering unlimited maintenance and technical support for websites. Designed for small businesses, it ensures content updating, technical troubleshooting, speed optimization and design customization. All managed efficiently through Trello. CoDuck\'s website, built on WordPress with integrations in Stripe, JavaScript, and PHP, focused on a minimalist design optimized for conversion. The main challenge was to create a fast and functional platform that facilitated the user experience, ensuring intuitive and efficient navigation.',
-    features: [
-      'Unlimited maintenance and support',
-      'Content updating and optimization',
-      'Speed optimization',
-      'Design customization',
-      'Trello-based workflow management',
-      'Stripe payment integration',
-    ],
-    tech: ['WordPress', 'Elementor', 'PHP', 'JavaScript', 'Stripe'],
-    image: 'https://i.postimg.cc/QMVmwqTk/formal-dp1687098306233.jpg',
-    links: {
-      live: '#',
-      github: '#',
-    },
-  },
-  {
-    id: 'luminal',
-    name: 'Luminal',
-    title: 'Luminal AI',
-    subtitle: 'All-in-one Learning Platform for Students',
-    description:
-      'AI-powered student platform with conversational tutoring and adaptive learning workflows. Luminal AI leverages cutting-edge language models to provide personalized tutoring experiences, spaced repetition learning, and adaptive difficulty progression. Built with scalable architecture and modern web technologies.',
-    features: [
-      'RAG-based retrieval system using embeddings',
-      'Context-aware AI responses',
-      'Spaced repetition system (FSRS-inspired)',
-      'Adaptive difficulty progression',
-      'Conversational tutoring interface',
-      'Progress tracking and analytics',
-    ],
-    tech: ['Next.js', 'HuggingFace', 'MongoDB', 'Tailwind', 'Better Auth', 'LLMs', 'RAG'],
-    image: 'https://i.postimg.cc/5ypFfhc8/Screenshot-from-2026-04-23-12-19-51.png',
-    links: {
-      live: 'https://luminal-ai.vercel.app',
-      github: 'https://github.com/RafexStrike/Luminal-AI',
-    },
-  },
-  {
-    id: 'flatmotion',
-    name: 'FlatMotion',
-    title: 'FlatMotion',
-    subtitle: 'AI-powered Mathematical Animation Generator',
-    description:
-      'Transform math prompts into beautiful, animated visualizations. FlatMotion uses advanced rendering and async job queue systems to generate complex mathematical animations from natural language descriptions. Built for educators and students who want to visualize abstract concepts.',
-    features: [
-      'Async rendering system with job queue',
-      'Retry and failure handling',
-      'Real-time polling updates',
-      'Cloudinary video storage',
-      'Multiple animation templates',
-      'High-performance rendering engine',
-    ],
-    tech: ['Next.js', 'Express', 'PostgreSQL', 'Prisma', 'Docker', 'Cloudinary', 'Canvas API'],
-    image: 'https://i.postimg.cc/6QR282Jw/Screenshot-from-2026-04-23-12-21-33.png',
-    links: {
-      live: 'https://flat-motion.vercel.app',
-      github: 'https://github.com/RafexStrike/FlatMotion-Client',
-    },
-  },
-];
-
-const DESKTOP_ICONS = [
-  {
-    id: 'projects',
-    label: 'Projects',
-    icon: '🗂️',
-    description: 'View my projects',
-  },
-  {
-    id: 'about',
-    label: 'About Me',
-    icon: '👤',
-    description: 'About me',
-  },
-  {
-    id: 'links',
-    label: 'Links',
-    icon: '🔗',
-    description: 'Contact & socials',
-  },
-];
-
-const SKILLS = [
-  {
-    category: 'Frontend',
-    items: ['React', 'Next.js', 'TypeScript', 'Tailwind CSS', 'Framer Motion'],
-  },
-  {
-    category: 'Backend',
-    items: ['Node.js', 'Express', 'PostgreSQL', 'MongoDB', 'Prisma'],
-  },
-  {
-    category: 'AI & ML',
-    items: ['LLMs', 'RAG', 'Embeddings', 'HuggingFace'],
-  },
-  {
-    category: 'DevOps',
-    items: ['Docker', 'Vercel', 'Render', 'GitHub Actions'],
-  },
-];
-
-const EDUCATION = [
-  {
-    degree: 'BSc IoT & Robotics Engineering',
-    school: 'University of Engineering',
-    year: '4th Year',
-  },
-];
+import { PROJECTS } from '@/data/projects';
+import { DESKTOP_ICONS } from '@/data/icons';
+import { PROFILE } from '@/data/profile';
+import { LINKS } from '@/data/links';
+import { useWindowManager } from '@/hooks/useWindowManager';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export default function Home() {
-  const [openWindow, setOpenWindow] = useState<string | null>(null);
+  const [isBooting, setIsBooting] = useState(true);
+  const [logs, setLogs] = useState<LogEntry[]>([]);
+  const { windows, openWindow, closeWindow, focusWindow, activeWindow } = useWindowManager(
+    DESKTOP_ICONS.map((i) => i.id)
+  );
 
-  const handleIconClick = (id: string) => {
-    setOpenWindow(id);
+  const addLog = useCallback((message: string) => {
+    const timestamp = new Date().toLocaleTimeString([], { hour12: false });
+    setLogs((prev) => [...prev, { id: Date.now(), timestamp, message }]);
+  }, []);
+
+  useEffect(() => {
+    if (!isBooting) {
+      addLog('System initialized');
+      addLog('Kernel loaded successfully');
+    }
+  }, [isBooting, addLog]);
+
+  const handleOpenWindow = (id: string) => {
+    const icon = DESKTOP_ICONS.find(i => i.id === id);
+    addLog(`Opening ${icon?.label || id}...`);
+    openWindow(id);
   };
 
-  const handleCloseWindow = () => {
-    setOpenWindow(null);
+  const handleCloseWindow = (id: string) => {
+    addLog(`Closing ${id}...`);
+    closeWindow(id);
   };
+
+  const commands = [
+    { id: 'open-projects', label: 'open projects', action: () => handleOpenWindow('projects') },
+    { id: 'open-about', label: 'open about', action: () => handleOpenWindow('about') },
+    { id: 'open-links', label: 'open links', action: () => handleOpenWindow('links') },
+    { id: 'clear-logs', label: 'clear logs', action: () => setLogs([]) },
+  ];
+
+  if (isBooting) {
+    return <BootSequence onComplete={() => setIsBooting(false)} />;
+  }
 
   return (
-    <main className="min-h-screen bg-gray-100">
+    <main className="min-h-screen bg-gray-100 overflow-x-hidden">
       {/* Topbar */}
-      <Topbar onEmailClick={() => window.location.href = 'mailto:adnanrahmanrafi515@gmail.com'} />
+      <Topbar onEmailClick={() => {
+        addLog('Initiating mail client...');
+        window.location.href = 'mailto:adnanrahmanrafi515@gmail.com';
+      }} />
 
       {/* Main Content Area */}
-      <div className="pt-16 pb-8">
-        {/* Desktop Sidebar */}
-        <Sidebar icons={DESKTOP_ICONS} onIconClick={handleIconClick} />
+      <div className="pt-20 pb-12">
+        {/* Desktop Sidebar (Right side as updated) */}
+        <Sidebar icons={DESKTOP_ICONS} onIconClick={handleOpenWindow} />
 
-        {/* Mobile Navigation */}
-        <div className="lg:hidden px-4 py-8">
-          <div className="grid grid-cols-3 gap-4">
+        {/* Mobile Section-Based Layout */}
+        <div className="lg:hidden flex flex-col gap-12 px-6 py-8">
+          <section id="mobile-hero" className="py-12 border-b-2 border-black/5">
+             <motion.div
+               initial={{ opacity: 0, y: 20 }}
+               animate={{ opacity: 1, y: 0 }}
+             >
+                <h1 className="text-5xl font-display font-bold mb-4 leading-tight tracking-tighter">
+                   Adnan Rafi
+                </h1>
+                <p className="text-lg font-mono text-gray-500 uppercase tracking-widest mb-6">
+                   Full Stack Developer
+                </p>
+                <div className="flex gap-2">
+                   <button 
+                     onClick={() => handleOpenWindow('projects')}
+                     className="bg-black text-white px-6 py-3 font-mono font-bold text-xs rounded-sm shadow-[4px_4px_0px_0px_rgba(0,0,0,0.2)]"
+                   >
+                     VIEW_PROJECTS()
+                   </button>
+                </div>
+             </motion.div>
+          </section>
+
+          {/* Mobile Grid Navigation */}
+          <div className="grid grid-cols-1 gap-4">
+             <p className="text-[10px] font-mono font-bold text-gray-400 uppercase tracking-[0.3em] mb-2">Navigation_Nodes</p>
             {DESKTOP_ICONS.map((icon) => (
               <button
                 key={icon.id}
-                onClick={() => handleIconClick(icon.id)}
-                className="flex flex-col items-center gap-2 p-4 border-2 border-black rounded hover:bg-black hover:text-white transition-all"
+                onClick={() => handleOpenWindow(icon.id)}
+                className="flex items-center gap-4 p-5 bg-white border-2 border-black rounded-sm shadow-[6px_6px_0px_0px_rgba(0,0,0,0.1)] active:translate-x-1 active:translate-y-1 active:shadow-none transition-all"
+                aria-label={`Open ${icon.label}`}
               >
-                <span className="text-2xl">{icon.icon}</span>
-                <span className="text-xs font-mono font-semibold text-center">{icon.label}</span>
+                <span className="text-3xl">{icon.icon}</span>
+                <div className="text-left">
+                   <span className="block text-sm font-mono font-bold uppercase tracking-tighter">{icon.label}</span>
+                   <span className="block text-[10px] text-gray-500">{icon.description}</span>
+                </div>
               </button>
             ))}
           </div>
         </div>
 
-        {/* Welcome Message for Desktop */}
-        {openWindow === null && (
-          <div className="flex items-center justify-center min-h-screen -mt-16">
-            <div className="text-center">
-              <h1 className="text-5xl md:text-6xl font-display font-bold mb-4">Welcome</h1>
-              <p className="text-lg text-gray-700 font-mono">to RafiHeras' Portfolio</p>
-              <p className="text-sm text-gray-600 mt-4">Click an icon to explore</p>
-            </div>
-          </div>
-        )}
+        {/* Desktop Welcome State */}
+        <AnimatePresence>
+          {!activeWindow && (
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="hidden lg:flex fixed inset-0 items-center justify-center -z-10"
+            >
+              <div className="text-center">
+                <motion.div
+                  initial={{ scale: 0.9 }}
+                  animate={{ scale: 1 }}
+                  transition={{ repeat: Infinity, repeatType: 'reverse', duration: 4 }}
+                  className="relative"
+                >
+                   <div className="absolute -inset-10 bg-black/5 blur-3xl rounded-full" />
+                   <h1 className="text-[12rem] font-display font-bold opacity-[0.03] select-none tracking-tighter">
+                      RAFI
+                   </h1>
+                </motion.div>
+                <div className="mt-[-4rem]">
+                  <h2 className="text-6xl font-display font-bold mb-4 tracking-tighter">Welcome</h2>
+                  <p className="text-lg text-gray-500 font-mono tracking-widest uppercase">Kernel Version 2.0.4-PROD</p>
+                  <div className="mt-8 flex items-center justify-center gap-4 text-xs font-mono text-gray-400">
+                     <span>PRESS <kbd className="bg-gray-200 px-2 py-1 border border-black/10 rounded font-bold text-black">/</kbd> FOR COMMANDS</span>
+                     <span className="w-1 h-1 bg-gray-300 rounded-full" />
+                     <span>CLICK ICONS TO INTERACT</span>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
-      {/* Windows */}
-      <Window
-        isOpen={openWindow === 'projects'}
-        onClose={handleCloseWindow}
-        title="Projects"
-        maxWidth="max-w-5xl"
-      >
-        <ProjectView projects={PROJECTS} />
-      </Window>
+      {/* Windows Layer */}
+      {windows.map((win) => (
+        <Window
+          key={win.id}
+          isOpen={win.isOpen}
+          onClose={() => handleCloseWindow(win.id)}
+          title={DESKTOP_ICONS.find(i => i.id === win.id)?.label || win.id}
+          zIndex={win.zIndex}
+          onFocus={() => focusWindow(win.id)}
+          maxWidth={win.id === 'projects' ? 'max-w-6xl' : win.id === 'about' ? 'max-w-4xl' : 'max-w-2xl'}
+        >
+          {win.id === 'projects' && <ProjectView projects={PROJECTS} />}
+          {win.id === 'about' && <AboutMe profile={PROFILE} />}
+          {win.id === 'links' && <Links links={LINKS} />}
+        </Window>
+      ))}
 
-      <Window
-        isOpen={openWindow === 'about'}
-        onClose={handleCloseWindow}
-        title="About Me"
-        maxWidth="max-w-3xl"
-      >
-        <AboutMe
-          name="Adnan Rafi"
-          role="Full Stack Developer"
-          summary="Aspiring full-stack developer focused on building scalable systems and real-world products. Passionate about AI, web technologies, and creating intuitive user experiences."
-          skills={SKILLS}
-          education={EDUCATION}
-        />
-      </Window>
-
-      <Window
-        isOpen={openWindow === 'links'}
-        onClose={handleCloseWindow}
-        title="Get In Touch"
-        maxWidth="max-w-2xl"
-      >
-        <Links
-          links={[
-            {
-              title: 'GitHub',
-              url: 'https://github.com/RafexStrike',
-              icon: '🔗',
-            },
-            {
-              title: 'LinkedIn',
-              url: 'https://www.linkedin.com/in/adnan-rafi/',
-              icon: '💼',
-            },
-            {
-              title: 'Portfolio',
-              url: 'https://adnan-rafi.netlify.app/',
-              icon: '🌐',
-            },
-            {
-              title: 'Email',
-              url: 'mailto:adnanrahmanrafi515@gmail.com',
-              icon: '✉️',
-            },
-          ]}
-        />
-      </Window>
+      {/* Overlays */}
+      <CommandPalette commands={commands} />
+      <SystemOverlay logs={logs} />
     </main>
   );
 }

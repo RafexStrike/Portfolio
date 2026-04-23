@@ -1,7 +1,7 @@
 'use client';
 
 import { motion, AnimatePresence } from 'framer-motion';
-import { ReactNode } from 'react';
+import { ReactNode, useRef } from 'react';
 
 interface WindowProps {
   isOpen: boolean;
@@ -9,7 +9,8 @@ interface WindowProps {
   title: string;
   children: ReactNode;
   maxWidth?: string;
-  fullScreen?: boolean;
+  zIndex?: number;
+  onFocus?: () => void;
 }
 
 export default function Window({
@@ -18,47 +19,81 @@ export default function Window({
   title,
   children,
   maxWidth = 'max-w-3xl',
-  fullScreen = false,
+  zIndex = 40,
+  onFocus,
 }: WindowProps) {
+  const constraintsRef = useRef(null);
+
   return (
     <AnimatePresence>
       {isOpen && (
         <>
-          {/* Backdrop */}
+          {/* Backdrop (Only for Desktop if we want to dim everything, but the user asked for stacking, so maybe no backdrop or a light one) */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 bg-black/30 z-30 backdrop-blur-sm"
+            className="fixed inset-0 bg-black/10 z-30 backdrop-blur-[1px] lg:block hidden"
           />
 
-          {/* Window */}
+          {/* Window Container (Full screen on mobile, draggable on desktop) */}
           <motion.div
-            initial={{ scale: 0.8, opacity: 0, y: 20 }}
-            animate={{ scale: 1, opacity: 1, y: 0 }}
-            exit={{ scale: 0.8, opacity: 0, y: 20 }}
-            transition={{ type: 'spring', damping: 25, stiffness: 400 }}
-            className={`fixed z-40 ${fullScreen ? 'inset-0' : `top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 ${maxWidth} w-11/12 max-h-[90vh]`}`}
+            ref={constraintsRef}
+            className="fixed inset-0 pointer-events-none"
+            style={{ zIndex }}
           >
-            <div className="pixel-border bg-white shadow-lg overflow-hidden flex flex-col h-full">
-              {/* Window Header */}
-              <div className="window-header flex justify-between items-center">
-                <h2 className="text-white font-mono font-bold">{title}</h2>
-                <button
-                  onClick={onClose}
-                  className="bg-transparent border-0 text-white text-xl hover:bg-white hover:text-black w-6 h-6 flex items-center justify-center rounded"
-                  aria-label="Close window"
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 20 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 400 }}
+              drag
+              dragMomentum={false}
+              dragConstraints={constraintsRef}
+              onPointerDown={onFocus}
+              className={`pointer-events-auto absolute 
+                lg:top-1/2 lg:left-1/2 lg:-translate-x-1/2 lg:-translate-y-1/2 
+                top-0 left-0 right-0 bottom-0 lg:bottom-auto lg:right-auto
+                ${maxWidth} w-full lg:w-11/12 max-h-screen lg:max-h-[90vh] flex flex-col`}
+            >
+              <div className="pixel-border bg-white shadow-2xl overflow-hidden flex flex-col h-full m-2 lg:m-0">
+                {/* Window Header */}
+                <div 
+                  className="window-header flex justify-between items-center cursor-grab active:cursor-grabbing select-none"
+                  aria-label={`Drag ${title} window`}
                 >
-                  ✕
-                </button>
-              </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-white/50 text-xs font-mono">■</span>
+                    <h2 className="text-white font-mono font-bold text-sm lg:text-base truncate">{title}</h2>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={onClose}
+                      className="bg-red-500/20 border-2 border-red-500/50 text-red-500 text-xs hover:bg-red-500 hover:text-white w-6 h-6 flex items-center justify-center rounded transition-colors"
+                      aria-label={`Close ${title} window`}
+                    >
+                      ✕
+                    </button>
+                  </div>
+                </div>
 
-              {/* Window Body */}
-              <div className="window-body overflow-y-auto flex-1">
-                {children}
+                {/* Window Body */}
+                <div className="window-body overflow-y-auto flex-1 p-4 lg:p-6 bg-white relative">
+                  {/* Sticky close button for mobile as requested */}
+                  <div className="lg:hidden sticky top-0 right-0 flex justify-end mb-4 z-10">
+                     <button
+                        onClick={onClose}
+                        className="bg-black text-white px-3 py-1 text-xs font-mono rounded border-2 border-black"
+                        aria-label="Close"
+                      >
+                        CLOSE [X]
+                      </button>
+                  </div>
+                  {children}
+                </div>
               </div>
-            </div>
+            </motion.div>
           </motion.div>
         </>
       )}

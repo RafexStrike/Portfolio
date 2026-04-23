@@ -2,17 +2,13 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Adnan Rafi | Full Stack Developer",
-  description: "Portfolio of Adnan Rafi - Full Stack Developer specializing in Next.js, AI/ML, and scalable web applications.",
-  keywords: ["portfolio", "developer", "next.js", "full-stack", "ai", "ml"],
-  authors: [{ name: "Adnan Rafi" }],
+  title: "Adnan Rafi — Full Stack Developer",
+  description:
+    "Full-stack developer building AI-powered systems, interactive products, and scalable backend architectures.",
   openGraph: {
-    title: "Adnan Rafi | Full Stack Developer",
-    description: "Portfolio of Adnan Rafi - Full Stack Developer",
+    title: "Adnan Rafi Portfolio",
+    description: "AI-powered systems, full-stack engineering, real-world products.",
     type: "website",
-  },
-  twitter: {
-    card: "summary_large_image",
   },
 };
 
