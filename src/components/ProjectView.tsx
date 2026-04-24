@@ -102,7 +102,7 @@ function ProjectView({ projects }: ProjectViewProps) {
                         </div>
                       )}
                       
-                      <div className="relative w-full h-56 lg:h-72">
+                      <div className="relative w-full h-56 lg:h-72 ">
                         <Image
                           src={selectedProject.image}
                           alt={selectedProject.title}
@@ -125,7 +125,7 @@ function ProjectView({ projects }: ProjectViewProps) {
                         href={selectedProject.links.live}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex-1 text-center px-4 py-3 bg-black text-white rounded font-mono text-xs font-bold hover:bg-gray-800 transition-all shadow-[4px_4px_0px_0px_rgba(0,0,0,0.2)]"
+                        className="flex-1 text-center px-4 py-3  text-white rounded font-mono text-xs font-bold hover:bg-gray-800 transition-all shadow-[4px_4px_0px_0px_rgba(0,0,0,0.2)]"
                         aria-label="Visit live project"
                       >
                         RUN_APPLICATION()

@@ -26,7 +26,7 @@ export default function Topbar({ onEmailClick }: TopbarProps) {
         {/* Center: Desktop Only */}
         <div className="hidden lg:flex items-center gap-2 flex-1 justify-center px-8">
           <div className="h-[2px] bg-white/20 flex-1 max-w-[100px]"></div>
-          <span className="text-[10px] font-mono font-bold text-white/40 uppercase tracking-[0.3em]">Kernel_Interface</span>
+          <span className="text-[10px] font-mono font-bold text-white/40 uppercase tracking-[0.3em]">A Developer with Love</span>
           <div className="h-[2px] bg-white/20 flex-1 max-w-[100px]"></div>
         </div>
 
