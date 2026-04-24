@@ -526,6 +526,14 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   /* config options here */
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'i.postimg.cc',
+      },
+    ],
+  },
 };
 
 export default nextConfig;
@@ -7547,6 +7555,14 @@ export default function Home() {
     setLogs((prev) => [...prev, { id: `${Date.now()}-${logIdRef.current++}`, timestamp, message }]);
   }, []);
 
+  // Force exit booting after 1.5s
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsBooting(false);
+    }, 1500);
+    return () => clearTimeout(timer);
+  }, []);
+
   useEffect(() => {
     if (!isBooting) {
       addLog('System initialized');
@@ -7554,7 +7570,7 @@ export default function Home() {
     }
   }, [isBooting, addLog]);
 
-  const handleOpenWindow = (id: string) => {
+  const handleIconClick = (id: string) => {
     const icon = DESKTOP_ICONS.find(i => i.id === id);
     addLog(`Opening ${icon?.label || id}...`);
     openWindow(id);
@@ -7566,9 +7582,9 @@ export default function Home() {
   };
 
   const commands = [
-    { id: 'open-projects', label: 'open projects', action: () => handleOpenWindow('projects') },
-    { id: 'open-about', label: 'open about', action: () => handleOpenWindow('about') },
-    { id: 'open-links', label: 'open links', action: () => handleOpenWindow('links') },
+    { id: 'open-projects', label: 'open projects', action: () => handleIconClick('projects') },
+    { id: 'open-about', label: 'open about', action: () => handleIconClick('about') },
+    { id: 'open-links', label: 'open links', action: () => handleIconClick('links') },
     { id: 'clear-logs', label: 'clear logs', action: () => setLogs([]) },
   ];
 
@@ -7587,7 +7603,7 @@ export default function Home() {
       {/* Main Content Area */}
       <div className="pt-20 pb-12">
         {/* Desktop Sidebar (Right side as updated) */}
-        <Sidebar icons={DESKTOP_ICONS} onIconClick={handleOpenWindow} />
+        <Sidebar icons={DESKTOP_ICONS} onClick={handleIconClick} />
 
         {/* Mobile Section-Based Layout */}
         <div className="lg:hidden flex flex-col gap-12 px-6 py-8">
@@ -7604,7 +7620,7 @@ export default function Home() {
                 </p>
                 <div className="flex gap-2">
                    <button 
-                     onClick={() => handleOpenWindow('projects')}
+                     onClick={() => handleIconClick('projects')}
                      className="bg-black text-white px-6 py-3 font-mono font-bold text-xs rounded-sm shadow-[4px_4px_0px_0px_rgba(0,0,0,0.2)]"
                    >
                      VIEW_PROJECTS()
@@ -7619,7 +7635,7 @@ export default function Home() {
             {DESKTOP_ICONS.map((icon) => (
               <button
                 key={icon.id}
-                onClick={() => handleOpenWindow(icon.id)}
+                onClick={() => handleIconClick(icon.id)}
                 className="flex items-center gap-4 p-5 bg-white border-2 border-black rounded-sm shadow-[6px_6px_0px_0px_rgba(0,0,0,0.1)] active:translate-x-1 active:translate-y-1 active:shadow-none transition-all"
                 aria-label={`Open ${icon.label}`}
               >
@@ -7655,13 +7671,13 @@ export default function Home() {
                    </h1>
                 </motion.div>
                 <div className="mt-[-4rem]">
-                  <h2 className="text-6xl font-display font-bold mb-4 tracking-tighter">Welcome</h2>
-                  <p className="text-lg text-gray-500 font-mono tracking-widest uppercase">Kernel Version 2.0.4-PROD</p>
-                  <div className="mt-8 flex items-center justify-center gap-4 text-xs font-mono text-gray-400">
-                     <span>PRESS <kbd className="bg-gray-200 px-2 py-1 border border-black/10 rounded font-bold text-black">/</kbd> FOR COMMANDS</span>
-                     <span className="w-1 h-1 bg-gray-300 rounded-full" />
-                     <span>CLICK ICONS TO INTERACT</span>
-                  </div>
+                   <h2 className="text-6xl font-display font-bold mb-4 tracking-tighter">Welcome</h2>
+                   <p className="text-lg text-gray-500 font-mono tracking-widest uppercase">Kernel Version 2.0.4-PROD</p>
+                   <div className="mt-8 flex items-center justify-center gap-4 text-xs font-mono text-gray-400">
+                      <span>PRESS <kbd className="bg-gray-200 px-2 py-1 border border-black/10 rounded font-bold text-black">/</kbd> FOR COMMANDS</span>
+                      <span className="w-1 h-1 bg-gray-300 rounded-full" />
+                      <span>CLICK ICONS TO INTERACT</span>
+                   </div>
                 </div>
               </div>
             </motion.div>
@@ -8071,7 +8087,7 @@ export default function Links({ links }: LinksProps) {
 ```tsx
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 import { Project } from '@/types';
@@ -8083,8 +8099,20 @@ interface ProjectViewProps {
 export default function ProjectView({ projects }: ProjectViewProps) {
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(projects[0]?.id || null);
   const [imgLoading, setImgLoading] = useState(true);
+  const [imgError, setImgError] = useState(false);
 
   const selectedProject = projects.find(p => p.id === selectedProjectId);
+
+  // Add timeout guard to prevent infinite loading
+  useEffect(() => {
+    if (!selectedProject?.image || imgError) return;
+    
+    const timer = setTimeout(() => {
+      setImgError(true);
+    }, 5000);
+
+    return () => clearTimeout(timer);
+  }, [selectedProject?.image, imgError]);
 
   return (
     <div className="flex flex-col lg:flex-row gap-6 h-full">
@@ -8099,6 +8127,7 @@ export default function ProjectView({ projects }: ProjectViewProps) {
                 onClick={() => {
                   setSelectedProjectId(project.id);
                   setImgLoading(true);
+                  setImgError(false);
                 }}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
@@ -8161,7 +8190,7 @@ export default function ProjectView({ projects }: ProjectViewProps) {
 
                 {/* Image Section */}
                 <div className="space-y-4">
-                  {selectedProject.image && (
+                  {selectedProject.image && !imgError ? (
                     <div className="border-3 border-black rounded overflow-hidden bg-gray-100 shadow-[8px_8px_0px_0px_rgba(0,0,0,0.05)] relative group">
                       {/* Skeleton Loader */}
                       {imgLoading && (
@@ -8175,16 +8204,26 @@ export default function ProjectView({ projects }: ProjectViewProps) {
                           src={selectedProject.image}
                           alt={selectedProject.title}
                           fill
+                          unoptimized
                           className={`object-cover transition-opacity duration-300 ${imgLoading ? 'opacity-0' : 'opacity-100'}`}
                           onLoad={() => setImgLoading(false)}
-                          onError={(e) => {
-                            e.currentTarget.src = "/fallback.png";
+                          onError={() => {
+                            setImgError(true);
                             setImgLoading(false);
                           }}
                         />
                       </div>
                     </div>
-                  )}
+                  ) : imgError ? (
+                    <div className="border-3 border-black rounded overflow-hidden bg-gray-100 shadow-[8px_8px_0px_0px_rgba(0,0,0,0.05)] relative group">
+                      <div className="flex items-center justify-center h-56 lg:h-72 text-sm text-gray-500 font-mono">
+                        <div className="text-center">
+                          <span className="text-2xl block mb-2">⚠️</span>
+                          <p>Image unavailable</p>
+                        </div>
+                      </div>
+                    </div>
+                  ) : null}
 
                   {/* Links */}
                   <div className="flex gap-3 flex-wrap">
@@ -8255,19 +8294,19 @@ import { Icon } from '@/types';
 
 interface SidebarProps {
   icons: Icon[];
-  onIconClick: (id: string) => void;
+  onClick: (id: string) => void;
 }
 
-export default function Sidebar({ icons, onIconClick }: SidebarProps) {
+export default function Sidebar({ icons, onClick }: SidebarProps) {
   return (
-    <div className="hidden lg:fixed right-8 top-1/2 -translate-y-1/2 flex flex-col gap-6 p-4 w-32 z-20">
+    <div className="hidden lg:flex lg:fixed right-8 top-1/2 -translate-y-1/2 flex-col gap-6 p-4 w-32 z-20 bg-red-500/10 border-2 border-dashed border-red-500/20">
       {icons.map((icon, index) => (
         <motion.button
           key={icon.id}
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.5 + index * 0.1 }}
-          onClick={() => onIconClick(icon.id)}
+          onClick={() => onClick(icon.id)}
           whileHover={{ x: -5 }}
           whileTap={{ scale: 0.95 }}
           aria-label={`Open ${icon.label} window`}
@@ -8463,17 +8502,15 @@ export default function Window({
   return (
     <AnimatePresence>
       {isOpen && (
-        <>
-          {/* Backdrop (Only for Desktop if we want to dim everything, but the user asked for stacking, so maybe no backdrop or a light one) */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={onClose}
-            className="fixed inset-0 bg-black/10 z-30 backdrop-blur-[1px] lg:block hidden"
-          />
-
-          {/* Window Container (Full screen on mobile, draggable on desktop) */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          onClick={onClose}
+          className="fixed inset-0 z-30 lg:bg-black/10 lg:backdrop-blur-[1px] lg:block hidden"
+          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+        >
+          {/* Window Container - wrapped in backdrop */}
           <motion.div
             ref={constraintsRef}
             className="fixed inset-0 pointer-events-none"
@@ -8488,6 +8525,7 @@ export default function Window({
               dragMomentum={false}
               dragConstraints={constraintsRef}
               onPointerDown={onFocus}
+              onClick={(e) => e.stopPropagation()}
               className={`pointer-events-auto absolute 
                 lg:top-1/2 lg:left-1/2 lg:-translate-x-1/2 lg:-translate-y-1/2 
                 top-0 left-0 right-0 bottom-0 lg:bottom-auto lg:right-auto
@@ -8531,7 +8569,7 @@ export default function Window({
               </div>
             </motion.div>
           </motion.div>
-        </>
+        </motion.div>
       )}
     </AnimatePresence>
   );
@@ -8642,6 +8680,7 @@ export const PROFILE: Profile = {
 ## FILE: src/data/projects.ts
 
 ```ts
+// src/data/project.ts
 import { Project } from '@/types';
 
 export const PROJECTS: Project[] = [
@@ -8661,7 +8700,7 @@ export const PROJECTS: Project[] = [
       'Progress tracking and analytics',
     ],
     tech: ['Next.js', 'HuggingFace', 'MongoDB', 'Tailwind', 'Better Auth', 'LLMs', 'RAG'],
-    image: 'https://i.postimg.cc/5ypFfhc8/Screenshot-from-2026-04-23-12-19-51.png',
+    image: '/images/luminal-homepage.png',
     links: {
       live: 'https://luminal-ai.vercel.app',
       github: 'https://github.com/RafexStrike/Luminal-AI',
@@ -8683,34 +8722,34 @@ export const PROJECTS: Project[] = [
       'High-performance rendering engine',
     ],
     tech: ['Next.js', 'Express', 'PostgreSQL', 'Prisma', 'Docker', 'Cloudinary', 'Canvas API'],
-    image: 'https://i.postimg.cc/6QR282Jw/Screenshot-from-2026-04-23-12-21-33.png',
+    image: '/images/flatmotion-homepage.png',
     links: {
       live: 'https://flat-motion.vercel.app',
       github: 'https://github.com/RafexStrike/FlatMotion-Client',
     },
   },
-  {
-    id: 'coduck',
-    name: 'Coduck',
-    title: 'CoDuck',
-    subtitle: 'Innovation in Web Maintenance',
-    description:
-      'CoDuck is a platform specialized in offering unlimited maintenance and technical support for websites. Designed for small businesses, it ensures content updating, technical troubleshooting, speed optimization and design customization. All managed efficiently through Trello. CoDuck\'s website, built on WordPress with integrations in Stripe, JavaScript, and PHP, focused on a minimalist design optimized for conversion. The main challenge was to create a fast and functional platform that facilitated the user experience, ensuring intuitive and efficient navigation.',
-    features: [
-      'Unlimited maintenance and support',
-      'Content updating and optimization',
-      'Speed optimization',
-      'Design customization',
-      'Trello-based workflow management',
-      'Stripe payment integration',
-    ],
-    tech: ['WordPress', 'Elementor', 'PHP', 'JavaScript', 'Stripe'],
-    image: 'https://i.postimg.cc/QMVmwqTk/formal-dp1687098306233.jpg',
-    links: {
-      live: 'https://coduck.co',
-      github: '', // Hidden if empty
-    },
-  },
+  // {
+  //   id: 'coduck',
+  //   name: 'Coduck',
+  //   title: 'CoDuck',
+  //   subtitle: 'Innovation in Web Maintenance',
+  //   description:
+  //     'CoDuck is a platform specialized in offering unlimited maintenance and technical support for websites. Designed for small businesses, it ensures content updating, technical troubleshooting, speed optimization and design customization. All managed efficiently through Trello. CoDuck\'s website, built on WordPress with integrations in Stripe, JavaScript, and PHP, focused on a minimalist design optimized for conversion. The main challenge was to create a fast and functional platform that facilitated the user experience, ensuring intuitive and efficient navigation.',
+  //   features: [
+  //     'Unlimited maintenance and support',
+  //     'Content updating and optimization',
+  //     'Speed optimization',
+  //     'Design customization',
+  //     'Trello-based workflow management',
+  //     'Stripe payment integration',
+  //   ],
+  //   tech: ['WordPress', 'Elementor', 'PHP', 'JavaScript', 'Stripe'],
+  //   image: 'https://i.postimg.cc/QMVmwqTk/formal-dp1687098306233.jpg',
+  //   links: {
+  //     live: 'https://coduck.co',
+  //     github: '', 
+  //   },
+  // },
 ];
 
 ```

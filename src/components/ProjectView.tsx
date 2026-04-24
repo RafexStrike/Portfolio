@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 import { Project } from '@/types';
@@ -9,11 +9,14 @@ interface ProjectViewProps {
   projects: Project[];
 }
 
-export default function ProjectView({ projects }: ProjectViewProps) {
+function ProjectView({ projects }: ProjectViewProps) {
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(projects[0]?.id || null);
-  const [imgLoading, setImgLoading] = useState(true);
+  const [imgLoading, setImgLoading] = useState(false);
 
   const selectedProject = projects.find(p => p.id === selectedProjectId);
+
+  // Debug log to verify render behavior
+  console.log("ProjectView render - selectedProject:", selectedProject?.id);
 
   return (
     <div className="flex flex-col lg:flex-row gap-6 h-full">
@@ -94,7 +97,7 @@ export default function ProjectView({ projects }: ProjectViewProps) {
                     <div className="border-3 border-black rounded overflow-hidden bg-gray-100 shadow-[8px_8px_0px_0px_rgba(0,0,0,0.05)] relative group">
                       {/* Skeleton Loader */}
                       {imgLoading && (
-                        <div className="absolute inset-0 bg-gray-200 animate-pulse flex items-center justify-center">
+                        <div className="absolute inset-0 bg-gray-200 animate-pulse flex items-center justify-center z-10">
                           <div className="w-12 h-12 border-4 border-black/10 border-t-black rounded-full animate-spin"></div>
                         </div>
                       )}
@@ -104,11 +107,11 @@ export default function ProjectView({ projects }: ProjectViewProps) {
                           src={selectedProject.image}
                           alt={selectedProject.title}
                           fill
-                          className={`object-cover transition-opacity duration-300 ${imgLoading ? 'opacity-0' : 'opacity-100'}`}
-                          onLoad={() => setImgLoading(false)}
+                          unoptimized
+                          className="object-cover"
+                          onLoadingComplete={() => setImgLoading(false)}
                           onError={(e) => {
                             e.currentTarget.src = "/fallback.png";
-                            setImgLoading(false);
                           }}
                         />
                       </div>
@@ -169,3 +172,5 @@ export default function ProjectView({ projects }: ProjectViewProps) {
     </div>
   );
 }
+
+export default React.memo(ProjectView);

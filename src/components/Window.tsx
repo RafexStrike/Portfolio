@@ -27,17 +27,15 @@ export default function Window({
   return (
     <AnimatePresence>
       {isOpen && (
-        <>
-          {/* Backdrop (Only for Desktop if we want to dim everything, but the user asked for stacking, so maybe no backdrop or a light one) */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={onClose}
-            className="fixed inset-0 bg-black/10 z-30 backdrop-blur-[1px] lg:block hidden"
-          />
-
-          {/* Window Container (Full screen on mobile, draggable on desktop) */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          onClick={onClose}
+          className="fixed inset-0 z-30 lg:bg-black/10 lg:backdrop-blur-[1px] lg:block hidden"
+          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+        >
+          {/* Window Container - wrapped in backdrop */}
           <motion.div
             ref={constraintsRef}
             className="fixed inset-0 pointer-events-none"
@@ -52,6 +50,7 @@ export default function Window({
               dragMomentum={false}
               dragConstraints={constraintsRef}
               onPointerDown={onFocus}
+              onClick={(e) => e.stopPropagation()}
               className={`pointer-events-auto absolute 
                 lg:top-1/2 lg:left-1/2 lg:-translate-x-1/2 lg:-translate-y-1/2 
                 top-0 left-0 right-0 bottom-0 lg:bottom-auto lg:right-auto
@@ -95,7 +94,7 @@ export default function Window({
               </div>
             </motion.div>
           </motion.div>
-        </>
+        </motion.div>
       )}
     </AnimatePresence>
   );

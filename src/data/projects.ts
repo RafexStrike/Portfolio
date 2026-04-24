@@ -1,3 +1,4 @@
+// src/data/project.ts
 import { Project } from '@/types';
 
 export const PROJECTS: Project[] = [
@@ -17,7 +18,7 @@ export const PROJECTS: Project[] = [
       'Progress tracking and analytics',
     ],
     tech: ['Next.js', 'HuggingFace', 'MongoDB', 'Tailwind', 'Better Auth', 'LLMs', 'RAG'],
-    image: 'https://i.postimg.cc/5ypFfhc8/Screenshot-from-2026-04-23-12-19-51.png',
+    image: '/images/luminal-homepage.png',
     links: {
       live: 'https://luminal-ai.vercel.app',
       github: 'https://github.com/RafexStrike/Luminal-AI',
@@ -39,32 +40,32 @@ export const PROJECTS: Project[] = [
       'High-performance rendering engine',
     ],
     tech: ['Next.js', 'Express', 'PostgreSQL', 'Prisma', 'Docker', 'Cloudinary', 'Canvas API'],
-    image: 'https://i.postimg.cc/6QR282Jw/Screenshot-from-2026-04-23-12-21-33.png',
+    image: '/images/flatmotion-homepage.png',
     links: {
       live: 'https://flat-motion.vercel.app',
       github: 'https://github.com/RafexStrike/FlatMotion-Client',
     },
   },
-  {
-    id: 'coduck',
-    name: 'Coduck',
-    title: 'CoDuck',
-    subtitle: 'Innovation in Web Maintenance',
-    description:
-      'CoDuck is a platform specialized in offering unlimited maintenance and technical support for websites. Designed for small businesses, it ensures content updating, technical troubleshooting, speed optimization and design customization. All managed efficiently through Trello. CoDuck\'s website, built on WordPress with integrations in Stripe, JavaScript, and PHP, focused on a minimalist design optimized for conversion. The main challenge was to create a fast and functional platform that facilitated the user experience, ensuring intuitive and efficient navigation.',
-    features: [
-      'Unlimited maintenance and support',
-      'Content updating and optimization',
-      'Speed optimization',
-      'Design customization',
-      'Trello-based workflow management',
-      'Stripe payment integration',
-    ],
-    tech: ['WordPress', 'Elementor', 'PHP', 'JavaScript', 'Stripe'],
-    image: 'https://i.postimg.cc/QMVmwqTk/formal-dp1687098306233.jpg',
-    links: {
-      live: 'https://coduck.co',
-      github: '', // Hidden if empty
-    },
-  },
+  // {
+  //   id: 'coduck',
+  //   name: 'Coduck',
+  //   title: 'CoDuck',
+  //   subtitle: 'Innovation in Web Maintenance',
+  //   description:
+  //     'CoDuck is a platform specialized in offering unlimited maintenance and technical support for websites. Designed for small businesses, it ensures content updating, technical troubleshooting, speed optimization and design customization. All managed efficiently through Trello. CoDuck\'s website, built on WordPress with integrations in Stripe, JavaScript, and PHP, focused on a minimalist design optimized for conversion. The main challenge was to create a fast and functional platform that facilitated the user experience, ensuring intuitive and efficient navigation.',
+  //   features: [
+  //     'Unlimited maintenance and support',
+  //     'Content updating and optimization',
+  //     'Speed optimization',
+  //     'Design customization',
+  //     'Trello-based workflow management',
+  //     'Stripe payment integration',
+  //   ],
+  //   tech: ['WordPress', 'Elementor', 'PHP', 'JavaScript', 'Stripe'],
+  //   image: 'https://i.postimg.cc/QMVmwqTk/formal-dp1687098306233.jpg',
+  //   links: {
+  //     live: 'https://coduck.co',
+  //     github: '', 
+  //   },
+  // },
 ];
